@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>유리스마 스트레칭 · 예약</title>
+<link rel="icon" href="https://yurismaschool.com/hero/yurisma-cover.png" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  /* 유리스마스쿨(yurismaschool.com) 색상 기준 */
+  :root{
+    --bg:#faf9f5; --card:#fff; --ink:#1a1815; --sub:#6b7280; --line:#ece9e2; --soft:#f8f9fa;
+    --blue:#4395eb; --blue-d:#2d7dd2; --blue-t:#e1f3fe; --purple:#8b5cf6; --red:#dc2626; --red-t:#fef2f2;
+    --font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  button,input,textarea{font-family:inherit}
+  .wrap{max-width:560px;margin:0 auto;min-height:100vh;padding-bottom:110px}
+  /* header */
+  header.top{position:sticky;top:0;z-index:5;background:rgba(250,249,245,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  header.top .in{display:flex;align-items:center;gap:10px;padding:12px 20px}
+  header.top img{height:34px;display:block}
+  header.top .ttl{flex:1;font-weight:700;font-size:15px;text-align:right;color:var(--sub)}
+  header.top .back{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:2px 6px 2px 0;color:var(--ink)}
+  .hero{text-align:center;padding:34px 20px 22px}
+  .hero h1{margin:0;font-size:38px;font-weight:900;letter-spacing:-.03em;line-height:1.15}
+  .hero p{margin:12px 0 0;color:#3f3a35;font-size:15.5px}
+  .hero p b{color:var(--blue);font-weight:700}
+  /* step tabs (사이트 과목 탭 형태) */
+  .stepbar{display:flex;background:var(--soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .stepbar span{flex:1;text-align:center;padding:13px 4px;font-size:14px;color:var(--sub);font-weight:500;border-bottom:2px solid transparent}
+  .stepbar span.done{color:var(--blue);font-weight:700}
+  .stepbar span.on{background:var(--card);color:var(--ink);font-weight:800;border-bottom-color:var(--ink)}
+  section.sec{padding:24px 20px}
+  section.sec h2{font-size:19px;font-weight:800;margin:0 0 14px;letter-spacing:-.02em}
+  /* pills (추천순/인기순 형태) */
+  .pills{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .pills button{padding:8px 16px;border:0;border-radius:999px;background:var(--soft);color:var(--sub);font-weight:500;font-size:13.5px;cursor:pointer}
+  .pills button.on{background:var(--blue);color:#fff;font-weight:700}
+  /* item cards */
+  .item{background:var(--card);border:1px solid var(--line);padding:16px 18px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;align-items:center;transition:border-color .15s}
+  .item:hover{border-color:#d9d4c9}
+  .item.on{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+  .item .t{font-weight:800;font-size:16px}
+  .item .d{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--blue-d);background:var(--blue-t);border-radius:999px;padding:3px 9px}
+  .tag{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--purple);border-radius:999px;padding:3px 9px;margin-left:6px;vertical-align:2px}
+.tag.ev{background:#fff;color:var(--blue-d);border:1px solid var(--blue);padding:2px 8px}
+.ptab{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+.period{margin:10px 0 4px;display:grid;gap:6px}
+.period .row{gap:6px;flex-wrap:wrap;align-items:center}
+.period input[type=date]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13.5px;max-width:150px}
+.period .pq button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.period .pq button.on{border-color:var(--blue);color:var(--blue-d);font-weight:800}
+.admin .btn.more{width:100%;margin-top:8px}
+.admin .btn.sms[aria-pressed=true]{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ptab th,.ptab td{border-bottom:1px solid var(--line);padding:7px 4px;text-align:left;vertical-align:middle}
+.ptab th{font-size:12.5px;white-space:nowrap}
+.ptab td:first-child{font-weight:700;min-width:64px}
+.admin .ptab input[type=number]{width:100%;min-width:92px;max-width:130px;padding:7px 6px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13.5px;background:#fff;-moz-appearance:textfield}
+.ptab input[type=number]::-webkit-inner-spin-button,.ptab input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ptab td:last-child,.ptab th:last-child{text-align:center}
+.ptab input[type=checkbox]{width:18px;height:18px}
+.ptab label{display:flex;gap:4px;align-items:center;white-space:nowrap}
+  .item .p{text-align:right;white-space:nowrap}
+  .item .p b{font-size:17px;font-weight:800}
+  .item .p s{display:block;font-size:12px;color:#9ca3af}
+  .note{font-size:12.5px;color:var(--sub);margin-top:10px}
+  /* calendar */
+  .calbox{background:var(--card);border:1px solid var(--line);padding:16px}
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .cal-head b{font-size:17px;font-weight:800}
+  .cal-head button{border:1px solid var(--line);background:#fff;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px;color:var(--ink)}
+  .cal-head button:disabled{opacity:.35;cursor:default}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+  .cal .w{font-size:12.5px;color:var(--sub);padding:4px 0 6px}
+  .cal .w.sun{color:var(--red)} .cal .w.sat{color:var(--blue)}
+  .cal button.day{width:40px;height:40px;margin:1px auto;border:0;border-radius:50%;background:none;font-size:14.5px;cursor:pointer;color:var(--ink);font-weight:500}
+  .cal button.day:hover:not(:disabled){background:var(--soft)}
+  .cal button.day:disabled{color:#cfd3d8;cursor:default}
+  .cal button.day.today{font-weight:800;box-shadow:0 0 0 1px var(--line) inset}
+  .cal button.day.on{background:var(--blue);color:#fff;font-weight:800}
+  .slot-label{font-size:14px;font-weight:700;margin:20px 0 10px}
+  .slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .slots button{padding:11px 0;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font-weight:700;font-size:14px;color:var(--ink)}
+  .slots button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .slots button:disabled{background:var(--soft);color:#c4c8ce;cursor:default;text-decoration:line-through;border-color:var(--soft)}
+  .loading{color:var(--sub);font-size:13px;padding:8px 0}
+  /* form */
+  .fbox{background:var(--card);border:1px solid var(--line);padding:4px 18px 20px}
+  label.f{display:block;font-weight:700;margin:18px 0 8px;font-size:14.5px}
+  label.f .req{color:var(--red);margin-left:2px}
+  label.f small{font-weight:400;color:var(--sub)}
+  input[type=text],input[type=tel],textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff;color:var(--ink)}
+  input:focus,textarea:focus{outline:2px solid var(--blue-t);border-color:var(--blue)}
+  textarea{min-height:80px;resize:vertical;margin-top:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips label{display:inline-flex}
+  .chips input{position:absolute;opacity:0;pointer-events:none}
+  .chips span{padding:8px 15px;border-radius:999px;cursor:pointer;font-size:14px;background:var(--soft);color:#4b5563;font-weight:500;border:1px solid transparent}
+  .chips input:checked + span{background:var(--blue);color:#fff;font-weight:700}
+  .chips input:focus-visible + span{border-color:var(--blue)}
+  .pain{display:flex;align-items:center;gap:14px}
+  .pain input{flex:1;accent-color:var(--blue)}
+  .pain output{min-width:56px;text-align:center;font-weight:900;font-size:22px;color:var(--blue)}
+  .pain-scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub)}
+  .warn{background:var(--red-t);color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px;display:none}
+  .agree{border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+  .agree label{display:flex;gap:9px;align-items:flex-start;padding:7px 0;font-size:14px;cursor:pointer}
+  .agree label.all{font-weight:800;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:3px}
+  .agree input{margin-top:3px;accent-color:var(--blue);width:17px;height:17px;flex:none}
+  .agree details{font-size:12.5px;color:var(--sub);margin:0 0 4px 26px}
+  .agree summary{cursor:pointer}
+  /* summary */
+  .sum{background:var(--card);border:1px solid var(--line);padding:16px 18px}
+  .sum .row{display:flex;justify-content:space-between;padding:6px 0;gap:14px;font-size:14.5px}
+  .sum .row span:first-child{color:var(--sub);flex:none}
+  .sum .row span:last-child{text-align:right;font-weight:600}
+  .sum .row.total{border-top:1px solid var(--line);margin-top:8px;padding-top:12px;font-size:16px}
+  .sum .row.total span:last-child{font-weight:900}
+  .pay-note{margin-top:12px;background:var(--blue-t);color:var(--blue-d);border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:600}
+  /* bottom bar */
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#fff;border-top:1px solid var(--line)}
+  .bar .in{max-width:560px;margin:0 auto;padding:12px 20px calc(12px + env(safe-area-inset-bottom));display:flex;gap:14px;align-items:center}
+  .bar .info{flex:1;font-size:12.5px;color:var(--sub);min-width:0}
+  .bar .info b{display:block;color:var(--ink);font-size:16px;font-weight:800}
+  .bar button{flex:0 0 50%;padding:15px;border:0;border-radius:999px;background:var(--blue);color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+  .bar button:hover:not(:disabled){background:var(--blue-d)}
+  .bar button:disabled{background:#d1d5db;cursor:default}
+  .demo-flag{background:#fff7e6;color:#92400e;font-size:12px;text-align:center;padding:6px}
+  .hide{display:none!important}
+  /* result */
+  .result{padding:48px 22px;text-align:center}
+  .result .ic{width:68px;height:68px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;background:var(--blue);font-weight:900}
+  .result.fail .ic{background:var(--red)}
+  .result h2{margin:0 0 8px;font-size:24px;font-weight:900;letter-spacing:-.02em}
+  .result .sum{text-align:left;margin-top:22px}
+  .result a{display:inline-block;margin-top:20px;color:var(--blue);font-weight:800;text-decoration:none}
+  /* admin */
+  .admin{padding:20px}
+  .admin h2{font-size:20px;font-weight:900}
+  .admin .box{background:var(--card);border:1px solid var(--line);padding:16px;margin-bottom:16px}
+  .admin table{border-collapse:collapse;width:100%;font-size:12.5px;text-align:center;table-layout:fixed}
+  .admin th,.admin td{border:1px solid var(--line);padding:0}
+  .admin th{background:var(--soft);padding:5px 0;font-weight:700}
+  .admin td button{width:100%;height:30px;border:0;background:#fff;cursor:pointer;font-family:inherit}
+  .admin td button.blk{background:#fee2e2;color:var(--red);font-weight:800}
+  .admin .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .admin .btn{padding:9px 14px;border:0;border-radius:999px;background:var(--soft);cursor:pointer;font-weight:700;color:#374151}
+  .admin .btn.pri{background:var(--blue);color:#fff}
+  .admin .slots button.blk{background:#fee2e2;border-color:#fecaca;color:var(--red);text-decoration:none}
+  .admin .list{font-size:13px;margin-top:8px}
+  .admin .list div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding:6px 0}
+  .admin .list button{border:0;background:none;color:var(--red);cursor:pointer;flex:none}
+  .admin .status{font-size:13px;color:var(--blue-d);font-weight:700;min-height:20px;margin-top:8px}
+  .notice{background:#fff7e6;color:#92400e;border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:600;margin-bottom:14px}
+  .hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .foot{text-align:center;font-size:12.5px;color:var(--sub);padding:10px 20px 30px}
+  .foot a{color:var(--sub)}
+  .foot .admlink{float:right;font-size:11px;color:#c9c4ba;text-decoration:none;margin-left:10px} .foot .admlink:hover{color:var(--sub)}
+  .bk{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;background:#fff}
+  .bk.cx{opacity:.55}
+  .bk .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800}
+  .bk .meta{font-size:13px;color:#4b5563;margin-top:4px;line-height:1.6}
+  .bk .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .bk .acts button{padding:7px 12px;border:0;border-radius:999px;font-weight:700;cursor:pointer;background:var(--soft);color:#374151;font-family:inherit}
+  .bk .acts .ok{background:var(--blue-t);color:var(--blue-d)} .bk .acts .no{background:#fee2e2;color:var(--red)}
+.bk .acts .mdel{margin-left:auto;align-self:center;padding:4px 8px;background:none;color:#c9a9a4;font-size:11.5px;font-weight:600;text-decoration:underline}
+.bk .acts .mdel:hover{color:var(--red)}
+  .st{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;color:#fff;background:#9ca3af}
+  .st.s-신청{background:var(--purple)} .st.s-확정{background:var(--blue)} .st.s-취소{background:#9ca3af}
+  .chg{margin-top:10px;padding:10px;border-radius:10px;background:var(--soft)}
+  .chg .slots{grid-template-columns:repeat(4,1fr);margin-top:8px}
+  .chg .slots button.coach{border-style:dashed;color:#b45309}
+  .chg input[type=date]{width:auto}
+  input[type=number],input[type=date],input[type=password],select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff;color:var(--ink);font-family:inherit}
+  .modebar{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:4px;margin-top:20px;gap:4px}
+  .modebar a{padding:8px 16px;border-radius:999px;color:var(--sub);text-decoration:none;font-weight:600;font-size:14px}
+  .modebar a.on{background:#fff;color:var(--ink);font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .btn-main{width:100%;margin-top:18px;padding:14px;border:0;border-radius:999px;background:var(--blue);color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+  .btn-main:disabled{background:#d1d5db;cursor:default}
+  .btn-sub{border:0;background:none;color:var(--sub);text-decoration:underline;cursor:pointer;font-family:inherit;font-size:13px;margin-top:14px}
+  .mcard{background:var(--card);border:1px solid var(--line);padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .mcard .who{font-weight:800;font-size:17px}
+  .mcard .sub{font-size:13px;color:var(--sub);margin-top:4px}
+  .mcard .big{font-size:42px;font-weight:900;color:var(--blue);line-height:1;text-align:right}
+  .mcard .big small{font-size:14px;color:var(--sub);font-weight:600;margin-left:2px}
+  .up{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:9px 2px;font-size:14.5px}
+  .msg{font-size:13.5px;font-weight:700;margin-top:10px;min-height:20px}
+  .msg.err{color:var(--red)} .msg.ok{color:var(--blue-d)}
+  .tag.mem{background:var(--blue)}
+  .mf{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:12px}
+  .mf label{font-size:12.5px;font-weight:700;color:#4b5563;display:block;margin-bottom:4px}
+  .mf .full{grid-column:1/-1}
+  /* 약정서 (유리스마스쿨 디자인) */
+  .doc{background:var(--card);border:1px solid var(--line);padding:22px 20px}
+  .doc .dhead{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:14px}
+  .doc .dhead img{height:30px} .doc .dhead span{font-size:12px;color:var(--sub);font-weight:600}
+  .doc h3{font-size:24px;font-weight:900;letter-spacing:-.02em;margin:4px 0 14px}
+  .doc h4{font-size:15px;font-weight:800;margin:20px 0 8px;color:var(--blue-d)}
+  .doc table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .doc th,.doc td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:middle}
+  .doc th{background:var(--soft);font-weight:700;width:32%;color:#374151}
+  .doc td input,.doc td select{padding:8px 10px;border-radius:8px;font-size:14px}
+  .doc .terms{max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.7;background:#fff}
+  .doc .terms h5{font-size:13.5px;margin:12px 0 4px;color:var(--ink)} .doc .terms h5:first-child{margin-top:0}
+  .doc .chk{display:flex;gap:9px;align-items:flex-start;padding:8px 0;font-size:14px;cursor:pointer;border-bottom:1px dashed var(--line)}
+  .doc .chk input{margin-top:3px;width:17px;height:17px;accent-color:var(--blue);flex:none}
+  .doc .chk small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
+  .doc .req{color:var(--red);font-weight:800} .doc .opt{color:var(--blue-d);font-weight:800}
+  .sigbox{border:1.5px dashed #b9c3cf;border-radius:12px;background:#fff;position:relative;touch-action:none}
+  .sigbox canvas{display:block;width:100%;height:150px;cursor:crosshair}
+  .sigbox .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c0c6cd;font-size:14px;pointer-events:none}
+  .doc .legal{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.6}
+  .prodpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #printArea{display:none}
+  @media print{ html,body{background:#fff!important} .wrap{min-height:0!important;padding:0!important} body *{visibility:hidden!important} #printArea,#printArea *{visibility:visible!important} #printArea{display:block!important;position:absolute;left:0;top:0;width:100%;padding:0}
+    #printArea .doc{border:0;padding:0} #printArea .terms{max-height:none;overflow:visible;border:0;padding:0} .bar{display:none!important} }
+  @media (max-width:420px){ .hero h1{font-size:31px} .slots{grid-template-columns:repeat(3,1fr)} .cal button.day{width:36px;height:36px} }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="demo-flag hide" id="demoFlag">미리보기 모드 · 예약이 이 브라우저에만 저장됩니다 (구글 시트 미연결)</div>
+  <header class="top"><div class="in">
+    <button class="back hide" id="backBtn" aria-label="이전">←</button>
+    <img src="https://yurismaschool.com/brand/yurisma-school-logo.png" alt="Yurisma School" />
+    <div class="ttl" id="topTitle">유리스마 스트레칭</div>
+  </div></header>
+
+  <!-- ====== 예약 화면 ====== -->
+  <div id="bookView">
+    <div class="hero">
+      <h1>유리스마 스트레칭</h1>
+      <p>전문가가 직접 늘려주는 <b>1:1 패시브 스트레칭</b>.<br>원하는 날짜와 시간을 골라 <b>바로 예약</b>하세요.</p>
+      <div class="modebar"><a class="on" href="./">처음 방문·신규</a><a href="?member">기존 회원 예약</a></div>
+    </div>
+    <div class="stepbar" id="stepbar"><span>이용권</span><span>날짜·시간</span><span>사전 질문</span><span>확인</span></div>
+
+    <!-- STEP 1 -->
+    <section class="sec" data-step="1">
+      <h2>이용권을 골라 주세요</h2>
+      <div class="pills" id="catTabs"></div>
+      <div id="itemList"></div>
+      <div class="note">가격은 부가세 포함입니다. 결제는 예약 확인 후 기존 결제 방식으로 안내드립니다.</div>
+      <div class="notice sameday" style="margin-top:12px"></div>
+    </section>
+
+    <!-- STEP 2 -->
+    <section class="sec hide" data-step="2">
+      <h2>날짜와 시간을 골라 주세요</h2>
+      <div class="notice sameday"></div>
+      <div class="calbox">
+        <div class="cal-head">
+          <button id="prevM" aria-label="이전 달">‹</button>
+          <b id="monthLabel"></b>
+          <button id="nextM" aria-label="다음 달">›</button>
+        </div>
+        <div class="cal" id="cal"></div>
+      </div>
+      <div class="slot-label" id="slotLabel">날짜를 먼저 선택해 주세요.</div>
+      <div class="slots" id="slots"></div>
+      <div class="note">줄 그어진 시간은 예약이 찼거나 코치 일정이 없는 시간입니다.</div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="sec hide" data-step="3">
+      <h2>예약자 정보와 사전 질문</h2>
+      <form id="qForm" class="fbox" autocomplete="on" onsubmit="return false">
+        <label class="f" id="lblName">이름<span class="req">*</span></label>
+        <input type="text" name="name" autocomplete="name" placeholder="홍길동" maxlength="30" />
+
+        <label class="f" id="lblPhone">연락처<span class="req">*</span></label>
+        <input type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="010-0000-0000" maxlength="13" />
+        <div class="note" id="phoneNote" style="margin-top:4px">예약이 확정되면 이 번호로 안내 문자를 보내드려요.</div>
+
+        <label class="f">거주지 <small>(시·구까지)</small><span class="req">*</span></label>
+        <input type="text" name="region" placeholder="예: 서울 강남구, 경기 안양" maxlength="40" />
+
+        <div id="schoolBox" class="hide">
+          <label class="f">학교<span class="req">*</span></label>
+          <input type="text" name="school" placeholder="예: 귀인초등학교 4학년" maxlength="40" />
+        </div>
+
+        <label class="f">성별<span class="req">*</span></label>
+        <div class="chips">
+          <label><input type="radio" name="gender" value="여성"><span>여성</span></label>
+          <label><input type="radio" name="gender" value="남성"><span>남성</span></label>
+        </div>
+
+        <label class="f">연령대<span class="req">*</span></label>
+        <div class="chips">
+          <label><input type="radio" name="age" value="10대 이하"><span>10대 이하</span></label>
+          <label><input type="radio" name="age" value="20대"><span>20대</span></label>
+          <label><input type="radio" name="age" value="30대"><span>30대</span></label>
+          <label><input type="radio" name="age" value="40대"><span>40대</span></label>
+          <label><input type="radio" name="age" value="50대"><span>50대</span></label>
+          <label><input type="radio" name="age" value="60대 이상"><span>60대 이상</span></label>
+        </div>
+
+        <label class="f">불편한 부위 <small>(여러 개 선택)</small><span class="req">*</span></label>
+        <div class="chips">
+          <label><input type="checkbox" name="area" value="목"><span>목</span></label>
+          <label><input type="checkbox" name="area" value="어깨"><span>어깨</span></label>
+          <label><input type="checkbox" name="area" value="등"><span>등</span></label>
+          <label><input type="checkbox" name="area" value="허리"><span>허리</span></label>
+          <label><input type="checkbox" name="area" value="골반·고관절"><span>골반·고관절</span></label>
+          <label><input type="checkbox" name="area" value="무릎"><span>무릎</span></label>
+          <label><input type="checkbox" name="area" value="발목·종아리"><span>발목·종아리</span></label>
+          <label><input type="checkbox" name="area" value="손목·팔꿈치"><span>손목·팔꿈치</span></label>
+          <label><input type="checkbox" name="area" value="특별히 없음"><span>특별히 없음</span></label>
+        </div>
+
+        <label class="f">현재 통증 정도<span class="req">*</span></label>
+        <div class="pain">
+          <input type="range" name="pain" min="0" max="10" step="1" value="0" id="painRange" aria-label="통증 정도" />
+          <output id="painOut">0</output>
+        </div>
+        <div class="pain-scale"><span>0 통증 없음</span><span>5 보통</span><span>10 참기 힘듦</span></div>
+        <div class="warn" id="painWarn">통증이 7 이상이면 스트레칭보다 진료가 먼저 필요할 수 있어요. 예약 후 코치가 상태를 먼저 확인합니다.</div>
+
+        <label class="f">병원 진료·수술·질환 이력<span class="req">*</span></label>
+        <div class="chips">
+          <label><input type="checkbox" name="med" value="없음"><span>해당 없음</span></label>
+          <label><input type="checkbox" name="med" value="최근 6개월 내 수술"><span>최근 6개월 내 수술</span></label>
+          <label><input type="checkbox" name="med" value="골절·인대 손상"><span>골절·인대 손상</span></label>
+          <label><input type="checkbox" name="med" value="디스크·협착증"><span>디스크·협착증</span></label>
+          <label><input type="checkbox" name="med" value="골다공증"><span>골다공증</span></label>
+          <label><input type="checkbox" name="med" value="고혈압·심혈관 질환"><span>고혈압·심혈관</span></label>
+          <label><input type="checkbox" name="med" value="임신 중"><span>임신 중</span></label>
+          <label><input type="checkbox" name="med" value="현재 병원 치료 중"><span>현재 병원 치료 중</span></label>
+          <label><input type="checkbox" name="med" value="기타"><span>기타</span></label>
+        </div>
+        <textarea name="medDetail" id="medDetail" class="hide" maxlength="500" placeholder="부위, 시기, 진단명, 현재 치료 여부를 적어 주세요."></textarea>
+        <div class="warn" id="medWarn">수술 직후, 급성 손상, 임신 등은 코치가 예약 전에 연락드려 진행 가능 여부를 확인합니다. 필요하면 의료진 상담을 먼저 권해 드릴 수 있어요.</div>
+
+        <label class="f">방문 경로<span class="req">*</span></label>
+        <div class="chips">
+          <label><input type="radio" name="route" value="인스타그램"><span>인스타그램</span></label>
+          <label><input type="radio" name="route" value="네이버 검색"><span>네이버 검색</span></label>
+          <label><input type="radio" name="route" value="블로그"><span>블로그</span></label>
+          <label><input type="radio" name="route" value="지인 소개"><span>지인 소개</span></label>
+          <label><input type="radio" name="route" value="유리스마스쿨"><span>유리스마스쿨</span></label>
+          <label><input type="radio" name="route" value="기타"><span>기타</span></label>
+        </div>
+
+        <label class="f">요청사항 <small>(선택)</small></label>
+        <textarea name="memo" maxlength="500" placeholder="코치에게 미리 전할 내용이 있으면 적어 주세요." style="margin-top:0"></textarea>
+        <div class="hp" aria-hidden="true"><label>홈페이지 <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <label class="f">동의</label>
+        <div class="agree">
+          <label class="all"><input type="checkbox" id="agreeAll"> 전체 동의</label>
+          <label><input type="checkbox" class="ag"> [필수] 개인정보 수집·이용 동의</label>
+          <details><summary>내용 보기</summary>수집 항목: 이름, 연락처(키즈는 보호자 연락처), 거주지(시·구), 학교(키즈), 성별, 연령대, 방문 경로 / 목적: 예약 확인·안내 연락(예약 확정 문자 포함)·수업 일정 관리 / 보관: 마지막 이용일로부터 1년 후 파기 · <a href="privacy.html" target="_blank">개인정보처리방침 전문</a></details>
+          <label><input type="checkbox" class="ag"> [필수] 건강정보(민감정보) 처리 동의</label>
+          <details><summary>내용 보기</summary>수집 항목: 불편 부위, 통증 정도, 진료·수술·질환 이력 / 목적: 안전한 스트레칭 진행 여부 판단과 프로그램 구성 / 보관: 위와 같음. 동의하지 않으면 안전 확인이 어려워 예약할 수 없습니다.</details>
+          <label><input type="checkbox" class="ag"> [필수] 예약 변경·취소 규정 확인</label>
+          <details><summary>내용 보기</summary>예약 24시간 전까지 변경·취소 가능, 이후 취소 및 노쇼는 1회 차감</details>
+        </div>
+      </form>
+    </section>
+
+    <!-- STEP 5: 약정서 (10회권·20회권만) -->
+    <section class="sec hide" data-step="5">
+      <h2>약정서를 작성해 주세요</h2>
+      <div class="note" style="margin:-6px 0 12px">10회권·20회권은 약정서에 서명해야 등록돼요. 서명한 약정서는 완료 화면에서 PDF로 저장할 수 있어요.</div>
+      <div id="contractHost"></div>
+    </section>
+
+    <!-- STEP 4 -->
+    <section class="sec hide" data-step="4">
+      <h2>예약 내용을 확인해 주세요</h2>
+      <div class="sum" id="summary"></div>
+      <div class="pay-note" id="payNote"></div>
+    </section>
+  </div>
+
+  <!-- ====== 약정서만 작성 (?contract) : 기존 회원·현장 결제용 ====== -->
+  <div id="contractView" class="hide">
+    <div class="hero"><h1>약정서 작성</h1><p><b>10회권·20회권</b> 등록을 위한 개인 트레이닝 약정서예요.<br>내용을 확인하고 서명해 주세요.</p></div>
+    <section class="sec">
+      <h2>이용권</h2>
+      <div class="prodpick chips" id="cvProducts"></div>
+      <label class="f">첫 수업일 <small>(정해지지 않았으면 비워 두세요)</small></label>
+      <input type="date" id="cvStart">
+      <div style="margin-top:18px" id="cvHost"></div>
+      <button class="btn-main" id="cvSubmit">서명하고 제출하기</button>
+      <div class="msg" id="cvMsg"></div>
+    </section>
+  </div>
+  <div id="printArea"></div>
+
+  <!-- ====== 기존 회원 예약 (?member) ====== -->
+  <div id="memberView" class="hide">
+    <div class="hero">
+      <h1>회원 예약</h1>
+      <p>이용권이 있는 회원은 <b>이름·연락처</b>로<br>남은 횟수를 확인하고 바로 예약하세요.</p>
+      <div class="modebar"><a href="./">처음 방문·신규</a><a class="on" href="?member">기존 회원 예약</a></div>
+    </div>
+    <section class="sec" id="mLogin">
+      <h2>회원 확인</h2>
+      <div class="fbox">
+        <label class="f">이름</label><input type="text" id="mName" autocomplete="name" maxlength="30" placeholder="홍길동">
+        <label class="f">연락처</label><input type="tel" id="mPhone" autocomplete="tel" inputmode="numeric" maxlength="13" placeholder="010-0000-0000">
+       <button class="btn-main" id="mLoginBtn">남은 횟수 확인하기</button>
+        <div class="msg" id="mLoginMsg"></div>
+      </div>
+      <div class="note">등록된 회원 정보가 확인되지 않으면 이솔 원장님께 문의해 주세요.</div>
+    </section>
+    <section class="sec hide" id="mHome">
+      <div class="mcard"><div><div class="who" id="mWho"></div><div class="sub" id="mItem"></div><div class="sub" id="mExp"></div></div>
+        <div class="big" id="mRemain"></div></div>
+      <h2 style="margin-top:24px">예정된 예약</h2>
+      <div id="mUpcoming"></div>
+      <div class="note">예약 변경·취소는 이솔 원장님께 연락해 주세요.</div>
+      <h2 style="margin-top:26px">새 예약</h2>
+      <div id="mBookArea">
+        <div class="notice sameday"></div>
+        <div class="calbox">
+          <div class="cal-head"><button id="mPrev" aria-label="이전 달">‹</button><b id="mMonth"></b><button id="mNext" aria-label="다음 달">›</button></div>
+          <div class="cal" id="mCal"></div>
+        </div>
+        <div class="slot-label" id="mSlotLabel">날짜를 먼저 선택해 주세요.</div>
+        <div class="slots" id="mSlots"></div>
+        <textarea id="mMemo" maxlength="300" placeholder="요청사항 (선택)"></textarea>
+        <button class="btn-main" id="mBookBtn" disabled>예약하기</button>
+        <div class="msg" id="mBookMsg"></div>
+      </div>
+      <div class="notice hide" id="mNoRemain">남은 횟수가 없거나 이용권 기간이 끝났어요. 이솔 원장님께 문의해 주세요.</div>
+      <button class="btn-sub" id="mLogout">다른 회원으로 확인하기</button>
+    </section>
+  </div>
+
+  <div class="foot" id="foot">유리스마 스트레칭 · <a href="privacy.html" target="_blank">개인정보처리방침</a><a href="?admin" class="admlink" aria-label="관리자">관리자</a></div>
+
+  <div id="resultView" class="hide"></div>
+
+  <!-- ====== 관리자 화면 (?admin) ====== -->
+  <div id="adminView" class="hide admin">
+    <h2>관리자</h2>
+    <div class="box" id="keyBox">
+      <b>관리자 비밀번호</b>
+      <div class="note" style="margin-top:2px">구글 스크립트 속성에 설정한 ADMIN_KEY 값을 입력하세요. 5번 틀리면 15분 동안 잠깁니다.</div>
+      <div class="row" style="margin-top:8px"><input type="password" id="adminKey" placeholder="비밀번호" autocomplete="current-password" style="max-width:220px"><button class="btn pri" id="keyOk">확인</button></div>
+      <div class="status" id="keyStatus"></div>
+      <button class="btn-sub" id="recoverBtn" style="margin-top:6px">비밀번호를 잊으셨나요? 내 이메일로 받기</button>
+      <button class="btn-sub hide" id="adminLogout" style="margin-top:6px;margin-left:10px">로그아웃</button>
+    </div>
+    <div id="adminBody" class="hide">
+    <div class="box">
+      <div class="row" style="justify-content:space-between"><b>① 예약 관리 (변경·확정·취소)</b>
+        <label style="font-size:13px;color:var(--sub)"><input type="checkbox" id="showPast"> 지난·취소 예약도 보기</label></div>
+      <div class="period">
+        <div class="row"><input type="date" id="pFrom" aria-label="시작일"><span>~</span><input type="date" id="pTo" aria-label="종료일"><button class="btn" id="pApply">기간 보기</button></div>
+        <div class="row pq"><button data-p="week">이번 주</button><button data-p="month">이번 달</button><button data-p="next">다음 달</button><button data-p="all">전체</button></div>
+        <div class="note" id="pInfo"></div>
+      </div>
+      <div id="bookingList"></div>
+      <button class="btn more hide" id="bookMore">더보기</button>
+      <div class="status" id="bookStatus"></div>
+      <div class="row" style="margin-top:6px"><button class="btn-sub" id="calResync">구글 캘린더 다시 맞추기</button><span class="note">예약이 확정되면 '이솔강사님' 캘린더에 &lt;스트레칭금액完&gt;으로 자동 추가되고, 시간 변경·취소도 바로 반영돼요. 결제 전 신청은 올라가지 않아요.</span></div>
+    </div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between"><b>예약 확정 문자 자동 발송</b><button class="btn sms" id="smsBtn" aria-pressed="false">꺼짐</button></div>
+      <div class="note">켜 두면 예약이 확정될 때 고객에게 확정 문자를 1회 보내요. 처음 방문·신규와 기존 회원 문자가 따로 나가고, 관리자가 직접 넣은 예약·일정 변경·취소는 보내지 않아요. <b>문자 서비스를 연결하기 전이라 지금은 설정만 저장돼요.</b></div>
+      <div class="status" id="smsStatus"></div>
+    </div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between"><b>② 회원 관리 (결제한 기존 회원)</b><button class="btn pri" id="memNew">+ 회원 등록</button></div>
+      <div class="note">남은 횟수 = 총 횟수 − 이전 사용 − 예약(취소 제외, 노쇼는 차감).</div>
+      <div id="memForm" class="chg hide">
+        <input type="hidden" id="mfId">
+        <div class="mf">
+          <div><label>이름</label><input type="text" id="mfName" maxlength="30"></div>
+          <div><label>연락처 (유리스마스쿨 가입 번호)</label><input type="tel" id="mfPhone" maxlength="13"></div>
+          <div><label>이용권</label><input type="text" id="mfItem" list="mfItems" maxlength="40"><datalist id="mfItems"></datalist></div>
+          <div><label>만료일 (비우면 없음)</label><input type="date" id="mfExpires"></div>
+          <div><label>총 횟수</label><input type="number" id="mfTotal" min="0" max="500"></div>
+          <div><label>이전 사용 (시스템 도입 전 쓴 횟수)</label><input type="number" id="mfPrev" min="0" max="500"></div>
+         <div><label>상태</label><select id="mfStatus"><option>활성</option><option>정지</option></select></div>
+          <div><label>거주지 (시·구)</label><input type="text" id="mfRegion" maxlength="40" placeholder="예: 경기 안양"></div>
+          <div><label>학교 (학생·키즈)</label><input type="text" id="mfSchool" maxlength="40" placeholder="예: 귀인초등학교"></div>
+          <div class="full"><label>메모</label><input type="text" id="mfMemo" maxlength="200"></div>
+          <div class="full"><label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" id="mfPaper" style="width:auto"> 종이 약정서로 받음 (10·20회권은 온라인 서명 또는 종이 약정서가 있어야 등록돼요)</label>
+            <div class="note" style="margin-top:4px">온라인 서명 링크: <a href="?contract" target="_blank" id="contractLink">약정서 작성 페이지</a> — 회원에게 보내면 같은 연락처로 서명한 약정서를 자동으로 찾아 연결해요.</div></div>
+        </div>
+        <div class="acts" style="margin-top:12px"><button class="btn pri" id="mfSave">저장</button><button class="btn" id="mfClose">닫기</button></div>
+      </div>
+      <button class="btn more" id="memMore">회원 목록 더보기</button>
+      <div id="memList" class="hide"></div>
+      <div class="status" id="memStatus"></div>
+    </div>
+    <h2 style="margin-top:26px">예약 불가 시간 설정</h2>
+    <div class="box">
+      <b>③ 매주 반복해서 막을 시간</b>
+      <div class="note" style="margin:4px 0 10px">칸을 누르면 빨간색(예약 불가)으로 바뀝니다. 예: 매주 화요일 19–21시 대학원 수업</div>
+      <div style="overflow-x:auto"><table id="weekGrid"></table></div>
+    </div>
+    <div class="box">
+      <b>④ 특정 날짜만 막기</b>
+      <div class="row" style="margin-top:10px">
+        <input type="date" id="blkDate" style="max-width:180px;padding:8px 10px;border:1px solid var(--line);border-radius:10px">
+        <button class="btn" id="blkAllDay">하루 전체 막기</button>
+      </div>
+      <div class="slots" id="adminSlots" style="grid-template-columns:repeat(4,1fr);margin-top:12px"></div>
+      <div class="list" id="dateBlockList"></div>
+    </div>
+    <div class="row"><button class="btn pri" id="saveBlocks">변경 내용 저장</button></div>
+    <div class="status" id="adminStatus"></div>
+    <h2 style="margin-top:26px">가격 관리</h2>
+    <div class="box">
+      <b>⑤ 상품 가격</b>
+      <div class="note" style="margin-top:2px">바꾼 가격은 새 신청부터 적용돼요. 이미 들어온 예약·약정서 금액은 그대로예요. 정가를 비우면 취소선 가격이 안 보여요. '이벤트가'를 켜면 상품 카드에 배지가 붙어요.</div>
+      <div style="overflow-x:auto"><table class="ptab" id="priceTable"></table></div>
+      <div class="row" style="margin-top:10px"><button class="btn pri" id="savePrices">가격 저장</button></div>
+      <div class="status" id="priceStatus"></div>
+    </div>
+    </div>
+    <a href="./" style="color:var(--blue);font-weight:800;text-decoration:none">← 예약 화면으로</a>
+  </div>
+
+  <div class="bar" id="bar"><div class="in">
+    <div class="info" id="barInfo">이용권을 선택하세요<b>-</b></div>
+    <button id="nextBtn" disabled>다음</button>
+  </div></div>
+</div>
+
+<script>
+/* =========================================================
+   운영 설정 — 여기만 고치면 됩니다
+   ========================================================= */
+const CONFIG = {
+  // 구글 시트 Apps Script 웹앱 주소 (https://script.google.com/macros/s/.../exec)
+  // 비워 두면 '미리보기 모드'로 이 브라우저에만 저장됩니다.
+  sheetApiUrl: 'https://script.google.com/macros/s/AKfycbzbuHAoUuO2RgG1bE5-ioKdgm12VMWe6mRZwSzrOyvE4rRh1UEqNlvwgMBAb-2ORVJf/exec',
+  openHour: 10, closeHour: 21,   // 운영 시간 (마지막 수업이 closeHour 전에 끝나야 함)
+  slotMinutes: 60,               // 예약 칸 간격 (수업 + 정리 시간)
+  // 예약 오픈: 이번 달 말까지만 열고, 매달 openDay일 openAtHour시(한국 시간)에 다음 달을 엽니다. (시트 스크립트와 같게)
+  openDay: 10, openAtHour: 12,
+  trainer: { name:'이솔', phone:'010-3175-7357' },
+  // 당일 예약은 받지 않음 (내일부터 예약 가능). 아래 문구가 이용권·날짜 화면에 표시됩니다.
+  sameDayNotice: '당일 예약은 온라인으로 받지 않아요. 당일 예약은 이솔 원장님께 따로 연락주시기 바랍니다.',
+  payNote: '예약 신청 후 코치가 사전 질문을 확인하고 기존 결제 방법을 안내드립니다. 결제가 끝나면 예약이 확정됩니다.',
+  categories: [
+    { id:'adult', label:'일반 · 성인', minutes:50, items:[
+      { id:'a-welcome', name:'웰컴 처방 스트레칭', desc:'첫 방문 1회 체험', price:100000, tag:'첫 방문' },
+      { id:'a-1',  name:'1회권',  desc:'1회', price:150000 },
+      { id:'a-10', name:'10회권', desc:'회당 120,000원', price:1200000, list:1500000 },
+      { id:'a-20', name:'20회권', desc:'회당 100,000원', price:2000000, list:3000000 },
+    ]},
+    { id:'kids', label:'학생 · 키즈', minutes:40, items:[
+      { id:'k-welcome', name:'키즈 웰컴 스트레칭', desc:'보호자 상담 · 첫 방문 1회', price:80000, tag:'첫 방문' },
+      { id:'k-1',  name:'1회권',  desc:'1회', price:120000 },
+      { id:'k-10', name:'10회권', desc:'회당 100,000원', price:1000000, list:1200000 },
+      { id:'k-20', name:'20회권', desc:'회당 80,000원', price:1600000, list:2400000 },
+    ]},
+  ],
+};
+
+/* ---------- 데이터 연결층: 구글 시트 or 미리보기(localStorage) ---------- */
+const API = CONFIG.sheetApiUrl.trim();
+const LS = { blocks:'yu_blocks_v2', bookings:'yu_bookings_v2' };
+const lsGet = (k,d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const lsSet = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const Store = {
+  blocks:{ weekly:{}, dates:{} }, booked:[],
+  async refresh(){
+    if (API) {
+      const r = await fetch(API + '?action=slots&t=' + Date.now());
+      const j = await r.json(); if (!j.ok) throw new Error(j.error || '불러오기 실패');
+      this.blocks = j.blocks; this.booked = j.booked; if (j.openUntil) this.openUntil = j.openUntil; renderOpenNotice();
+      if (j.prices) applyPrices(j.prices);
+    } else {
+      this.blocks = Object.assign({ weekly:{}, dates:{} }, lsGet(LS.blocks, {}));
+      this.booked = lsGet(LS.bookings, []).map(b => ({ date:b.date, hour:b.hour }));
+    }
+  },
+  async book(data){
+    if (API) {
+      const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'book', ...data }) });
+      return r.json();
+    }
+    await this.refresh();
+    if (this.booked.some(b => b.date===data.date && b.hour===data.hour)) return { ok:false, error:'taken' };
+    const id = 'YU' + Date.now().toString(36).toUpperCase();
+    const all = lsGet(LS.bookings, []); all.push({ id, status:'신청', createdAt:new Date().toISOString(), ...data }); lsSet(LS.bookings, all);
+    return { ok:true, id };
+  },
+  async saveBlocks(blocks, key){
+    if (API) {
+      const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'setBlocks', key, blocks }) });
+      return r.json();
+    }
+    lsSet(LS.blocks, blocks); return { ok:true };
+  },
+  // 기존 회원: memberLogin / memberBook (이름·연락처를 매번 함께 보냄)
+  async member(action, payload){
+    if (!API) return { ok:false, error:'preview' };
+    const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action, ...payload }) });
+    return r.json();
+  },
+  // 관리자 기능: list / update / cancel / confirm / noshow / members / memberSave / adminBook
+  async admin(action, key, extra={}){
+    if (API) {
+      const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action, key, ...extra }) });
+      return r.json();
+    }
+    const all = lsGet(LS.bookings, []);
+    if (action==='list') return { ok:true, rows: all };
+    const me = all.find(x => x.id===extra.id); if (!me) return { ok:false, error:'notfound' };
+    if (action==='update'){
+      if (all.some(x => x.id!==me.id && x.status!=='취소' && x.date===extra.date && x.hour===extra.hour)) return { ok:false, error:'taken' };
+      me.note = (me.note?me.note+' / ':'') + `시간 변경 ${me.date} ${hm(me.hour)} → ${extra.date} ${hm(extra.hour)}`; me.date=extra.date; me.hour=extra.hour;
+    }
+    if (action==='cancel') me.status='취소';
+    if (action==='confirm') me.status='확정';
+    lsSet(LS.bookings, all); return { ok:true };
+  },
+};
+
+/* ---------- 유틸 ---------- */
+const $ = s => document.querySelector(s);
+const won = n => n.toLocaleString('ko-KR') + '원';
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const WEEK = ['일','월','화','수','목','금','토'];
+const hm = h => `${pad(Math.floor(h))}:${pad(Math.round((h%1)*60))}`;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function slotStarts(){ const out=[], step=CONFIG.slotMinutes/60; for(let h=CONFIG.openHour; h+step<=CONFIG.closeHour+1e-9; h+=step) out.push(h); return out; }
+function blockedReason(dateStr, h){
+  const b = Store.blocks, dow = new Date(dateStr+'T00:00:00').getDay();
+  if ((b.weekly[dow]||[]).includes(h)) return 'coach';
+  const d = b.dates[dateStr]; if (d==='all' || (Array.isArray(d) && d.includes(h))) return 'coach';
+  if (Store.booked.some(x => x.date===dateStr && x.hour===h)) return 'booked';
+  if (dateStr <= ymd(new Date())) return 'past';   // 당일·지난 날짜는 온라인 예약 불가
+  return '';
+}
+
+/* ---------- 상태 ---------- */
+const st = { step:1, cat:CONFIG.categories[0].id, item:null, date:null, hour:null, view:new Date(), loading:false, sending:false };
+st.view.setDate(1); st.view.setHours(0,0,0,0);
+const catObj = () => CONFIG.categories.find(c => c.id===st.cat);
+const itemObj = () => catObj().items.find(i => i.id===st.item);
+
+/* ---------- 가격 (관리자 [가격 관리]에서 바꾼 값을 서버에서 받아 덮어쓴다) ---------- */
+const allItems = () => CONFIG.categories.flatMap(c => c.items.map(i => ({ c, i })));
+const priceLabel = (c, i) => { const g = c.id==='kids' ? '키즈' : '성인'; return (i.name.startsWith(g) ? '' : g + ' ') + i.name.replace(/ 스트레칭$/, '').replace('처방 ', ''); };
+function applyPrices(p){
+  allItems().forEach(({ i }) => { const x = p[i.id]; if (!x) return;
+    i.price = Number(x.price) || i.price; i.list = Number(x.list) || 0; i.event = !!x.event;
+    const pk = pkgOf(i.name); if (pk) i.desc = `회당 ${won(Math.round(i.price / pk.count))}`; });
+  if (!$('#bookView').classList.contains('hide')) { renderItems(); updateBar(); }
+  if (typeof window.onPrices === 'function') window.onPrices();
+}
+
+/* ---------- STEP 1 ---------- */
+function renderItems(){
+  $('#catTabs').innerHTML = CONFIG.categories.map(c => `<button data-c="${c.id}" class="${c.id===st.cat?'on':''}">${c.label}</button>`).join('');
+  const m = catObj().minutes;
+  $('#itemList').innerHTML = catObj().items.map(i => `
+    <div class="item ${i.id===st.item?'on':''}" data-i="${i.id}" role="button" tabindex="0">
+      <div><div class="t">${i.name}${i.tag?`<span class="tag">${i.tag}</span>`:''}${i.event?'<span class="tag ev">이벤트가</span>':''}</div>
+        <div class="d"><span class="chip">◷ ${m}분</span><span class="chip">${i.desc}</span></div></div>
+      <div class="p">${i.list?`<s>${won(i.list)}</s>`:''}<b>${won(i.price)}</b></div>
+    </div>`).join('');
+}
+$('#catTabs').addEventListener('click', e => { const c=e.target.dataset.c; if(!c) return; st.cat=c; st.item=null; renderItems(); updateBar(); });
+$('#itemList').addEventListener('click', e => { const el=e.target.closest('.item'); if(!el) return; st.item=el.dataset.i; renderItems(); updateBar(); });
+$('#itemList').addEventListener('keydown', e => { if((e.key==='Enter'||e.key===' ') && e.target.classList.contains('item')){ e.preventDefault(); e.target.click(); } });
+
+/* ---------- STEP 2 ---------- */
+function renderCal(){
+  const y=st.view.getFullYear(), m=st.view.getMonth();
+  $('#monthLabel').textContent = `${y}년 ${m+1}월`;
+  const first=new Date(y,m,1).getDay(), last=new Date(y,m+1,0).getDate();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const maxD=new Date(openUntil()+'T00:00:00');
+  let html = WEEK.map((w,i) => `<div class="w ${i===0?'sun':i===6?'sat':''}">${w}</div>`).join('');
+  for(let i=0;i<first;i++) html+='<div></div>';
+  for(let d=1; d<=last; d++){
+    const dt=new Date(y,m,d), s=ymd(dt);
+    const open = !st.loading && dt>=today && dt<=maxD && slotStarts().some(h => !blockedReason(s,h));
+    html += `<button class="day ${s===ymd(today)?'today':''} ${s===st.date?'on':''}" data-d="${s}" ${open?'':'disabled'}>${d}</button>`;
+  }
+  $('#cal').innerHTML = html;
+  const nowM=new Date(); nowM.setDate(1); nowM.setHours(0,0,0,0);
+  const maxM=new Date(maxD.getFullYear(), maxD.getMonth(), 1);
+  $('#prevM').disabled = st.view <= nowM; $('#nextM').disabled = st.view >= maxM;
+}
+function renderSlots(){
+  if (st.loading){ $('#slotLabel').textContent=''; $('#slots').innerHTML='<div class="loading">예약 가능한 시간을 불러오는 중…</div>'; return; }
+  if (!st.date){ $('#slots').innerHTML=''; $('#slotLabel').textContent='날짜를 먼저 선택해 주세요.'; return; }
+  const d=new Date(st.date+'T00:00:00');
+  $('#slotLabel').textContent = `${d.getMonth()+1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) 예약 가능한 시간`;
+  $('#slots').innerHTML = slotStarts().map(h => { const b=blockedReason(st.date,h);
+    return `<button data-h="${h}" class="${h===st.hour?'on':''}" ${b?'disabled':''} aria-label="${hm(h)}${b==='booked'?' 예약 마감':b?' 예약 불가':''}">${hm(h)}</button>`; }).join('');
+}
+async function loadAvailability(){
+  st.loading=true; renderCal(); renderSlots();
+  try { await Store.refresh(); } catch(e){ alert('예약 가능 시간을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.\n(' + e.message + ')'); }
+  st.loading=false;
+  if (st.date && st.hour!==null && blockedReason(st.date, st.hour)) st.hour=null;
+  renderCal(); renderSlots(); updateBar();
+}
+$('#prevM').onclick = () => { st.view.setMonth(st.view.getMonth()-1); renderCal(); };
+$('#nextM').onclick = () => { st.view.setMonth(st.view.getMonth()+1); renderCal(); };
+$('#cal').addEventListener('click', e => { const s=e.target.dataset.d; if(!s) return; st.date=s; st.hour=null; renderCal(); renderSlots(); updateBar(); });
+$('#slots').addEventListener('click', e => { const h=e.target.dataset.h; if(h===undefined) return; st.hour=Number(h); renderSlots(); updateBar(); });
+
+/* ---------- STEP 3 ---------- */
+const form = $('#qForm');
+$('#painRange').addEventListener('input', e => { $('#painOut').textContent=e.target.value; $('#painWarn').style.display = e.target.value>=7?'block':'none'; updateBar(); });
+function exclusive(name, noneValue, target){
+  const boxes=[...form.querySelectorAll(`input[name="${name}"]`)];
+  if (target.value===noneValue && target.checked) boxes.forEach(b => { if(b.value!==noneValue) b.checked=false; });
+  else if (target.checked) boxes.find(b => b.value===noneValue).checked=false;
+  return boxes;
+}
+form.addEventListener('change', e => {
+  const t=e.target;
+  if (t.name==='med'){
+    const picked = exclusive('med','없음',t).filter(b => b.checked && b.value!=='없음');
+    $('#medDetail').classList.toggle('hide', picked.length===0);
+    $('#medWarn').style.display = picked.some(b => ['최근 6개월 내 수술','골절·인대 손상','임신 중','현재 병원 치료 중'].includes(b.value)) ? 'block':'none';
+  }
+  if (t.name==='area') exclusive('area','특별히 없음',t);
+  if (t.id==='agreeAll') form.querySelectorAll('.ag').forEach(a => a.checked=t.checked);
+  if (t.classList.contains('ag')) $('#agreeAll').checked = [...form.querySelectorAll('.ag')].every(a => a.checked);
+  updateBar();
+});
+form.addEventListener('input', updateBar);
+function formData(){
+  const f=new FormData(form);
+  return { name:(f.get('name')||'').trim(), phone:(f.get('phone')||'').replace(/[^0-9]/g,''),
+    gender:f.get('gender')||'', age:f.get('age')||'', area:f.getAll('area'), pain:Number(f.get('pain')),
+    region:(f.get('region')||'').trim(), school: isKids() ? (f.get('school')||'').trim() : '',
+    med:f.getAll('med'), medDetail:(f.get('medDetail')||'').trim(), route:f.get('route')||'', memo:(f.get('memo')||'').trim(),
+    agreed:[...form.querySelectorAll('.ag')].every(a => a.checked) };
+}
+function formMissing(){
+  const d=formData(), miss=[];
+  if(!d.name) miss.push(isKids()?'아이 이름':'이름'); if(!/^01[016789][0-9]{7,8}$/.test(d.phone)) miss.push(isKids()?'보호자 연락처':'연락처');
+  if(!d.region) miss.push('거주지'); if(isKids() && !d.school) miss.push('학교');
+  if(!d.gender) miss.push('성별'); if(!d.age) miss.push('연령대'); if(!d.area.length) miss.push('불편 부위');
+  if(!d.med.length) miss.push('진료·수술 이력'); if(d.med.some(v => v!=='없음') && !d.medDetail) miss.push('이력 상세');
+  if(!d.route) miss.push('방문 경로'); if(!d.agreed) miss.push('필수 동의');
+  return miss;
+}
+const fmtPhone = p => p.replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3');
+function isKids(){ return st.cat === 'kids'; }
+function syncKidsForm(){   // 키즈: 아이 이름 + 보호자 연락처 + 학교
+  const k = isKids();
+  $('#lblName').innerHTML = (k ? '아이 이름' : '이름') + '<span class="req">*</span>';
+  $('#lblPhone').innerHTML = (k ? '보호자 연락처' : '연락처') + '<span class="req">*</span>';
+  $('#phoneNote').textContent = k ? '예약이 확정되면 보호자님 번호로 안내 문자를 보내드려요.' : '예약이 확정되면 이 번호로 안내 문자를 보내드려요.';
+  $('#schoolBox').classList.toggle('hide', !k);
+}
+
+/* ---------- STEP 4 ---------- */
+function renderSummary(){
+  const i=itemObj(), d=formData(), dt=new Date(st.date+'T00:00:00');
+  const rows=[
+    ['이용권', `${catObj().label} · ${i.name}`],
+    ['일시', `${dt.getMonth()+1}월 ${dt.getDate()}일 (${WEEK[dt.getDay()]}) ${hm(st.hour)} · ${catObj().minutes}분`],
+    [isKids() ? '아이 · 보호자 연락처' : '예약자', `${d.name} · ${fmtPhone(d.phone)}`], ['거주지', d.region + (d.school ? ` · ${d.school}` : '')], ['기본 정보', `${d.gender} · ${d.age}`],
+    ['불편 부위', d.area.join(', ')], ['통증 정도', `${d.pain} / 10`],
+    ['진료·수술 이력', d.med.join(', ') + (d.medDetail?` (${d.medDetail})`:'')], ['방문 경로', d.route],
+  ];
+  if (d.memo) rows.push(['요청사항', d.memo]);
+  if (isPkgItem() && contractUI){ const c = contractUI.get(); rows.push(['약정서', `작성 완료 · ${c.pay} · 사용기간 ${periodText(c.start, c.days)}`]); }
+  $('#summary').innerHTML = rows.map(r => `<div class="row"><span>${r[0]}</span><span>${esc(r[1])}</span></div>`).join('')
+    + `<div class="row total"><span>이용 금액</span><span>${won(i.price)}</span></div>`;
+  $('#payNote').textContent = CONFIG.payNote;
+}
+
+/* ---------- 약정서 (10회권·20회권) ---------- */
+const TERMS_HTML = `<h5>1. 수업 진행과 사용 기간</h5>1) 모든 세션은 주 1회 진행을 기본으로 하며, 세션 소진 기간은 10회 70일, 20회 140일입니다. 사용기간은 첫 수업일부터 10회권 70일, 20회권 140일이며 위에 기재된 날짜까지입니다.<br>2) 본 상품은 10회권·20회권 상품이며, 여행·질병·출장 등 회원 개인 사정에 따른 홀딩(일시정지)은 제공하지 않습니다.<br>3) 사용기간 동안 수강을 완료하지 않은 경우 남은 세션은 소멸하며 환불되지 않습니다.
+<h5>2. 계약 해지와 환불</h5>1) 회원 사정으로 해지하는 경우, 수업 시작 여부와 관계없이 총 강습비의 10%를 위약금으로 공제합니다.<br>2) 수업을 시작한 뒤 해지하는 경우, 위약금과 이미 진행한 세션 비용을 공제한 뒤 남은 금액을 환불합니다. 진행한 세션은 1회 정가 150,000원으로 계산하며, 이는 다회권 할인가가 아닌 1회권 정가 기준입니다.<br>3) 카드 결제는 결제 금액 전체를 카드 취소한 뒤, 사용액(위약금과 진행한 세션 비용)을 재결제하는 방식으로 처리합니다.
+<h5>3. 이용 대상</h5>본 강습은 회원 본인만 사용할 수 있으며, 타인에게 양도할 수 없습니다.
+<h5>4. 예약 취소와 변경</h5>수업을 취소·변경하려면 수업 24시간 전까지 트레이너에게 연락해야 하며, 미리 연락하지 않은 경우 1회 수업이 진행된 것으로 봅니다. 갑작스러운 사고·응급 질환 등 불가피한 사유가 확인되면 협의하여 차감하지 않을 수 있습니다.
+<h5>5. 건강 상태 고지와 안전</h5>1) 회원은 현재 앓고 있는 질환, 통증, 수술 이력, 복용 중인 약, 임신 여부 등 운동에 영향을 줄 수 있는 사항을 수업 전에 사실대로 알려야 하며, 변동이 생기면 즉시 알립니다.<br>2) 트레이너는 의료인이 아니며 진단이나 치료를 하지 않습니다. 의학적 판단이 필요한 경우 전문의 상담을 권하며, 필요하면 의사 확인 후 수업을 진행할 수 있습니다.<br>3) 트레이너의 개인 강습을 받는 도중 회원님이나 그 이외의 사람이 사고를 유발할 경우 상해의 위험이 있습니다. 이러한 위험이 발생할 수 있다는 것을 회원님께서는 인지하고 계시며, 회원님의 부주의 또는 다른 사람의 행위로 인하여 회원님 개인의 신체 혹은 정신에 어떠한 형태로든 상해가 발생하거나 경제적 손실 및 손상을 보게 되더라도 트레이너는 책임이 없다는 사실을 인지하고 동의합니다. 회원님의 과실로 인하여 다른 사람이 상해를 입어서 발생하는 경제적 손실에 대해 보상을 요구할 경우, 트레이너가 아닌 회원님 본인이 손해 배상 청구와 관련된 일체의 책임을 지셔야 하며 그러한 보상에 대해 트레이너는 책임지지 않습니다.
+<h5>6. 기타</h5>1) 본 약정서에 기재되어 있지 아니한 사항에 대해 트레이너는 약속이나 책임을 지지 않으며, 이 약정서 이외의 어떠한 구두, 서면상의 약정은 효력이 없습니다.<br>2) 본 약정서는 전자서명으로 체결하며, 체결 후 pdf파일로 회원과 트레이너가 각각 보관합니다.`;
+const CONSENTS = [
+  { k:'agreeRequired', req:true, t:'성명·연락처·주소·생년월일·결제 정보 수집·이용', s:'목적: 계약 이행, 일정 안내, 환불 처리 · 보유: 계약 종료 후 3년(법령상 보존 기간이 더 길면 그 기간)' },
+  { k:'agreeSensitive', req:true, t:'건강정보(민감정보) 수집·이용', s:'항목: 질환, 통증, 수술 이력, 복용 약 등 · 목적: 안전한 운동 프로그램 설계 · 보유: 계약 종료 시 파기' },
+  { k:'snsPhoto', t:'전·후 사진 촬영 및 인스타그램 등 SNS 게시', s:'목적: 자세·체형 변화 기록과 홍보 · 보유: 원본은 계약 종료 시 파기, 게시물은 철회 요청 시까지' },
+  { k:'snsVideo', t:'수업 영상 촬영 및 인스타그램 등 SNS 게시', s:'목적: 운동 피드백과 홍보 · 보유: 원본은 계약 종료 시 파기, 게시물은 철회 요청 시까지' },
+  { k:'review', t:'작성한 후기(리뷰)를 SNS·홈페이지 홍보에 활용', s:'이름은 가려서 게시 · 보유: 철회 요청 시까지' },
+  { k:'face', t:'게시물에 얼굴 노출 허용', s:'동의하지 않으면 얼굴을 가린 상태로만 게시합니다' },
+];
+function pkgOf(name){ const m = String(name||'').match(/(10|20)회권/); return m ? { key:m[0], count:+m[1], days: m[1]==='10' ? 70 : 140 } : null; }
+function addDaysStr(s, n){ const d=new Date(s+'T00:00:00'); d.setDate(d.getDate()+n); return ymd(d); }
+function ageOn(birth){ if(!birth) return 99; const b=birth.split('-').map(Number), t=ymd(new Date()).split('-').map(Number); let a=t[0]-b[0]; if (t[1]<b[1] || (t[1]===b[1] && t[2]<b[2])) a--; return a; }
+function periodText(start, days){ return start ? `${start} ~ ${addDaysStr(start, days-1)}` : `첫 수업일부터 ${days}일`; }
+function makeContract(host, opts={}){
+  const uid = 'c' + Math.random().toString(36).slice(2,7);
+  host.innerHTML = `<div class="doc">
+    <div class="dhead"><img src="https://yurismaschool.com/brand/yurisma-school-logo.png" alt="Yurisma School"><span>유리스마 스트레칭</span></div>
+    <h3>개인 트레이닝 약정서</h3>
+    <table>
+      <tr><th>회원 성명</th><td><input type="text" data-k="name" maxlength="30" placeholder="홍길동"></td></tr>
+      <tr><th>연락처</th><td><input type="tel" data-k="phone" inputmode="numeric" maxlength="13" placeholder="010-0000-0000"></td></tr>
+      <tr><th>생년월일</th><td><input type="date" data-k="birth" max="${ymd(new Date())}"></td></tr>
+      <tr><th>주소</th><td><input type="text" data-k="address" maxlength="120" placeholder="주소"></td></tr>
+      <tr><th>상품</th><td data-v="product">-</td></tr>
+      <tr><th>회당 수강료</th><td data-v="unit">-</td></tr>
+      <tr><th>강습비 합계</th><td data-v="total">-</td></tr>
+      <tr><th>사용기간</th><td data-v="period">-</td></tr>
+      <tr><th>결제 방법</th><td><div class="chips">${['현금','계좌이체','카드'].map(p => `<label><input type="radio" name="${uid}pay" data-k="pay" value="${p}"><span>${p}</span></label>`).join('')}</div></td></tr>
+      <tr><th>담당 트레이너</th><td>${CONFIG.trainer.name} · ${CONFIG.trainer.phone}</td></tr>
+    </table>
+    <div class="guard hide"><h4>보호자(법정대리인) 정보 <span class="req" style="font-size:12px">만 14세 미만 필수</span></h4>
+      <table><tr><th>보호자 성명</th><td><input type="text" data-k="guardianName" maxlength="30"></td></tr>
+        <tr><th>관계</th><td><input type="text" data-k="guardianRel" maxlength="10" placeholder="예: 모, 부"></td></tr>
+        <tr><th>보호자 연락처</th><td><input type="tel" data-k="guardianPhone" inputmode="numeric" maxlength="13" placeholder="010-0000-0000"></td></tr></table></div>
+    <h4>약정사항</h4><div class="terms">${TERMS_HTML}</div>
+    <label class="chk"><input type="checkbox" data-k="agreeTerms"><span><b class="req">[필수]</b> 위 약정사항을 모두 읽고 이해했으며 동의합니다.</span></label>
+    <h4>개인정보 수집·이용 동의</h4>
+    ${CONSENTS.map(c => `<label class="chk"><input type="checkbox" data-k="${c.k}"><span>${c.req?'<b class="req">[필수]</b>':'<b class="opt">[선택]</b>'} ${c.t}<small>${c.s}</small></span></label>`).join('')}
+    <div class="note">동의하지 않을 권리가 있습니다. 필수 항목에 동의하지 않으면 계약 체결이나 안전한 수업 진행이 어렵고, 선택 항목은 동의하지 않아도 불이익이 없습니다. 게시 동의는 언제든 철회할 수 있고, 요청하면 게시물을 지체 없이 내립니다.</div>
+    <h4 data-v="signLabel">회원 서명</h4>
+    <div class="sigbox"><canvas></canvas><div class="ph">이곳에 손가락이나 마우스로 서명해 주세요</div></div>
+    <div class="row" style="justify-content:space-between;margin-top:6px;gap:8px"><span class="note" style="margin:0;flex:1">위의 모든 사항을 설명 듣고 이해하였으며, 이에 동의하여 약정을 체결합니다.</span><button type="button" class="btn-sub" data-a="clear" style="margin:0">서명 지우기</button></div>
+    <div class="legal">이 약정서는 전자서명으로 체결하며, 당사자가 전자서명 방식을 선택한 경우 그 전자서명은 서명·날인과 같은 효력을 가집니다(「전자서명법」 제3조). 개인정보 동의는 항목별로 구분해 받습니다(「개인정보 보호법」 제22조). 제출하면 서명한 약정서를 PDF로 저장할 수 있고, 트레이너에게도 같은 내용이 보관됩니다.</div>
+  </div>`;
+  const root = host.querySelector('.doc'), q = k => root.querySelector(`[data-k="${k}"]`), V = k => root.querySelector(`[data-v="${k}"]`);
+  const cv = root.querySelector('canvas'), ctx = cv.getContext('2d'), ph = root.querySelector('.ph');
+  let info = {}, inked = false, drawing = false, last = null;
+  const changed = () => opts.onChange && opts.onChange();
+  const minor = () => info.kids || ageOn(q('birth').value) < 14;
+  const syncGuard = () => { const m = minor(); root.querySelector('.guard').classList.toggle('hide', !m); V('signLabel').textContent = m ? '보호자(법정대리인) 서명' : '회원 서명'; };
+  const fit = () => { const w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return; if (cv.width !== Math.round(w*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(150*dpr); inked = false; ph.classList.remove('hide'); } ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=2.6*dpr; ctx.strokeStyle='#1a1815'; };
+  const pos = e => { const r = cv.getBoundingClientRect(), dpr = cv.width / r.width; return [(e.clientX-r.left)*dpr, (e.clientY-r.top)*dpr]; };
+  cv.addEventListener('pointerdown', e => { fit(); drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.arc(last[0], last[1], ctx.lineWidth/2, 0, 7); ctx.fillStyle='#1a1815'; ctx.fill(); inked = true; ph.classList.add('hide'); e.preventDefault(); });
+  cv.addEventListener('pointermove', e => { if (!drawing) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); last = p; e.preventDefault(); });
+  const end = () => { if (drawing) { drawing = false; changed(); } };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); cv.addEventListener('pointerleave', end);
+  root.querySelector('[data-a="clear"]').onclick = () => { ctx.clearRect(0,0,cv.width,cv.height); inked = false; ph.classList.remove('hide'); changed(); };
+  root.addEventListener('input', () => { syncGuard(); changed(); });
+  root.addEventListener('change', () => { syncGuard(); changed(); });
+  const api = {
+    setInfo(o){ info = Object.assign(info, o); V('product').textContent = `${o.product} (주 1회 / 1회 ${o.minutes}분)`;
+      V('unit').textContent = `${won(o.unit)} (1회 정가 150,000원)`; V('total').textContent = won(o.total);
+      V('period').textContent = `${periodText(o.start, o.days)} (첫 수업일부터 10회권 70일 / 20회권 140일)`; syncGuard(); },
+    prefill(o){ if (o.name && !q('name').value) q('name').value = o.name; if (o.phone && !q('phone').value) q('phone').value = fmtPhone(o.phone); },
+    fit,
+    missing(){ const m=[]; if (!q('name').value.trim()) m.push('회원 성명'); if (!/^01[016789]\d{7,8}$/.test(q('phone').value.replace(/\D/g,''))) m.push('연락처');
+      if (!q('birth').value) m.push('생년월일'); if (!q('address').value.trim()) m.push('주소'); if (!root.querySelector(`input[name="${uid}pay"]:checked`)) m.push('결제 방법');
+      if (minor() && (!q('guardianName').value.trim() || !q('guardianRel').value.trim() || !/^01[016789]\d{7,8}$/.test(q('guardianPhone').value.replace(/\D/g,'')))) m.push('보호자 정보');
+      if (!q('agreeTerms').checked) m.push('약정 동의'); if (!q('agreeRequired').checked || !q('agreeSensitive').checked) m.push('필수 개인정보 동의');
+      if (!inked) m.push('서명'); return m; },
+    get(){ const small = document.createElement('canvas'); small.width = 420; small.height = 150; const sc = small.getContext('2d'); sc.drawImage(cv, 0, 0, 420, 150);
+      const c = { name:q('name').value.trim(), phone:q('phone').value.replace(/\D/g,''), birth:q('birth').value, address:q('address').value.trim(),
+        pay:(root.querySelector(`input[name="${uid}pay"]:checked`)||{}).value || '', agreeTerms:q('agreeTerms').checked, sign: small.toDataURL('image/png'), ua: navigator.userAgent };
+      CONSENTS.forEach(x => c[x.k] = q(x.k).checked);
+      if (minor()) { c.guardianName=q('guardianName').value.trim(); c.guardianRel=q('guardianRel').value.trim(); c.guardianPhone=q('guardianPhone').value.replace(/\D/g,''); }
+      return Object.assign(c, { minutes:info.minutes, unit:info.unit, total:info.total, start:info.start || '', productLabel:info.product, days:info.days, minor:minor() }); },
+  };
+  return api;
+}
+function printContract(c, id){
+  const yn = v => v ? '■ 동의 □ 미동의' : '□ 동의 ■ 미동의';
+  $('#printArea').innerHTML = `<div class="doc"><div class="dhead"><img src="https://yurismaschool.com/brand/yurisma-school-logo.png" alt=""><span>약정번호 ${esc(id)} · ${esc(new Date().toLocaleString('ko-KR'))}</span></div>
+    <h3>개인 트레이닝 약정서</h3><table>
+    <tr><th>회원 성명</th><td>${esc(c.name)}</td></tr><tr><th>연락처</th><td>${esc(fmtPhone(c.phone))}</td></tr><tr><th>생년월일</th><td>${esc(c.birth)}</td></tr><tr><th>주소</th><td>${esc(c.address)}</td></tr>
+    <tr><th>상품</th><td>${esc(c.productLabel)} (주 1회 / 1회 ${c.minutes}분)</td></tr><tr><th>회당 수강료</th><td>${won(c.unit)} (1회 정가 150,000원)</td></tr><tr><th>강습비 합계</th><td>${won(c.total)}</td></tr>
+    <tr><th>사용기간</th><td>${esc(periodText(c.start, c.days))}</td></tr><tr><th>결제 방법</th><td>${esc(c.pay)}</td></tr><tr><th>담당 트레이너</th><td>${CONFIG.trainer.name} · ${CONFIG.trainer.phone}</td></tr>
+    ${c.minor?`<tr><th>보호자(법정대리인)</th><td>${esc(c.guardianName)} (${esc(c.guardianRel)}) · ${esc(fmtPhone(c.guardianPhone||''))}</td></tr>`:''}</table>
+    <h4>약정사항</h4><div class="terms">${TERMS_HTML}</div><p>■ 위 약정사항을 모두 읽고 이해했으며 동의합니다.</p>
+    <h4>개인정보 수집·이용 동의</h4><table>${CONSENTS.map(x => `<tr><th>${x.req?'필수':'선택'}</th><td>${x.t}<br><span style="color:#6b7280;font-size:12px">${x.s}</span></td><td style="white-space:nowrap">${yn(c[x.k])}</td></tr>`).join('')}</table>
+    <h4>${c.minor?'보호자(법정대리인) 서명':'회원 서명'}</h4><table><tr><th>${esc(c.minor?c.guardianName:c.name)}</th><td><img src="${c.sign}" style="height:80px"></td></tr><tr><th>트레이너</th><td>${CONFIG.trainer.name}</td></tr></table>
+    <div class="legal">전자서명으로 체결한 약정서입니다(「전자서명법」 제3조).</div></div>`;
+  const img = $('#printArea').querySelector('.dhead img');
+  const go = () => setTimeout(() => window.print(), 100);
+  if (img.complete) go(); else { img.onload = go; img.onerror = go; }
+}
+
+/* ---------- 흐름 ---------- */
+const STEP_LABEL = { 1:'이용권', 2:'날짜·시간', 3:'사전 질문', 5:'약정서', 4:'확인' };
+const STEP_TITLE = { 1:'유리스마 스트레칭', 2:'날짜·시간 선택', 3:'사전 질문', 5:'약정서 작성', 4:'예약 확인' };
+const isPkgItem = () => !!(st.item && pkgOf(itemObj().name));
+const flow = () => isPkgItem() ? [1,2,3,5,4] : [1,2,3,4];
+let contractUI = null, lastContract = null;
+function ensureContract(){
+  const i = itemObj(), c = catObj(), p = pkgOf(i.name), d = formData();
+  if (!contractUI) contractUI = makeContract($('#contractHost'), { onChange: updateBar });
+  contractUI.setInfo({ product:`${c.label} ${i.name}`, minutes:c.minutes, unit:Math.round(i.price/p.count), total:i.price, start:st.date, days:p.days, kids:c.id==='kids' });
+  contractUI.prefill({ name:d.name, phone:d.phone });
+  setTimeout(() => contractUI.fit(), 50);
+}
+function canNext(){
+  if (st.sending) return false;
+  if (st.step===1) return !!st.item;
+  if (st.step===2) return !st.loading && !!(st.date && st.hour!==null);
+  if (st.step===3) return formMissing().length===0;
+  if (st.step===5) return !!contractUI && contractUI.missing().length===0;
+  return true;
+}
+function updateBar(){
+  const i = st.item && itemObj();
+  let info = i ? `${i.name}<b>${won(i.price)}</b>` : '이용권을 선택하세요<b>-</b>';
+  if (st.step===2 && st.date && st.hour!==null){ const dt=new Date(st.date+'T00:00:00'); info = `${i.name}<b>${dt.getMonth()+1}.${dt.getDate()} (${WEEK[dt.getDay()]}) ${hm(st.hour)}</b>`; }
+  if (st.step===3){ const m=formMissing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
+  if (st.step===5 && contractUI){ const m=contractUI.missing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
+  $('#barInfo').innerHTML = info;
+  $('#nextBtn').textContent = st.sending ? '신청 중…' : st.step===4 ? (isPkgItem() ? '서명하고 예약 신청하기' : '예약 신청하기') : '다음';
+  $('#nextBtn').disabled = !canNext();
+}
+function go(step){
+  st.step=step;
+  const f = flow(), idx = f.indexOf(step);
+  document.querySelectorAll('#bookView [data-step]').forEach(s => s.classList.toggle('hide', Number(s.dataset.step)!==step));
+  $('#stepbar').innerHTML = f.map((s,i) => `<span class="${i===idx?'on':i<idx?'done':''}">${STEP_LABEL[s]}</span>`).join('');
+  $('#backBtn').classList.toggle('hide', step===1);
+  $('#topTitle').textContent = STEP_TITLE[step];
+  if (step===2) loadAvailability();
+  if (step===5) ensureContract();
+  if (step===3) syncKidsForm();
+  if (step===4) renderSummary();
+  updateBar(); window.scrollTo(0, step===1?0:$('#stepbar').offsetTop-56);
+}
+$('#backBtn').onclick = () => { const f = flow(), i = f.indexOf(st.step); go(f[Math.max(0, i-1)]); };
+$('#nextBtn').onclick = () => { if(!canNext()) return; const f = flow(), i = f.indexOf(st.step); i < f.length-1 ? go(f[i+1]) : submit(); };
+
+async function submit(){
+  st.sending=true; updateBar();
+  const i=itemObj(), d=formData();
+  const payload = { date:st.date, hour:st.hour, time:hm(st.hour), category:catObj().label, minutes:catObj().minutes, itemId:i.id, itemName:i.name, price:i.price,
+    name:d.name, phone:d.phone, region:d.region, school:d.school, gender:d.gender, age:d.age, area:d.area, pain:d.pain, med:d.med, medDetail:d.medDetail, route:d.route, memo:d.memo, agreed:d.agreed,
+    website: form.querySelector('input[name=website]').value };
+  if (isPkgItem() && contractUI){ const c = contractUI.get(); lastContract = c; payload.contract = Object.assign({}, c, { product:i.name, category:catObj().label, categoryLabel:catObj().label.split(' ')[0] }); }
+  let res;
+  try { res = await Store.book(payload); } catch(e){ res = { ok:false, error:'network', message:e.message }; }
+  st.sending=false;
+  if (res.ok) return showDone(payload, res.id, res.contractId);
+  if (res.error==='contract'){ alert(res.message || '약정서를 다시 확인해 주세요.'); go(5); return; }
+  if (res.error==='taken'){ alert('방금 다른 분이 이 시간을 예약했어요. 다른 시간을 골라 주세요.'); st.hour=null; go(2); return; }
+  if (res.error==='sameday'){ alert(CONFIG.sameDayNotice); st.date=null; st.hour=null; go(2); return; }
+  if (res.error==='notOpen'){ alert(openNoticeText()); st.date=null; st.hour=null; go(2); return; }
+  if (res.error==='limit'){ alert('같은 연락처로 잡힌 예약이 이미 3건 있어요. 추가 예약은 이솔 원장님께 따로 연락주세요.'); updateBar(); return; }
+  if (res.error==='busy'){ alert('지금 예약이 몰려 있어요. 잠시 후 다시 시도해 주세요.'); updateBar(); return; }
+  alert('예약 신청 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.' + (res.message?`\n(${res.message})`:''));
+  updateBar();
+}
+function showDone(p, id, contractId){
+  $('#bookView').classList.add('hide'); $('#bar').classList.add('hide'); $('#backBtn').classList.add('hide'); $('#foot').classList.add('hide');
+  $('#topTitle').textContent='신청 완료';
+  const dt=new Date(p.date+'T00:00:00');
+  const v=$('#resultView'); v.classList.remove('hide');
+  v.innerHTML = `<div class="result"><div class="ic">✓</div><h2>예약 신청이 접수됐어요</h2>
+    <div style="color:var(--sub)">${esc(CONFIG.payNote)}</div>
+    <div class="sum">
+      <div class="row"><span>예약번호</span><span>${esc(id)}</span></div>
+      <div class="row"><span>이용권</span><span>${esc(p.category)} · ${esc(p.itemName)}</span></div>
+      <div class="row"><span>일시</span><span>${dt.getMonth()+1}월 ${dt.getDate()}일 (${WEEK[dt.getDay()]}) ${p.time} · ${p.minutes}분</span></div>
+      <div class="row"><span>예약자</span><span>${esc(p.name)} · ${fmtPhone(p.phone)}</span></div>
+      <div class="row total"><span>이용 금액</span><span>${won(p.price)}</span></div>
+    </div>${contractId ? `<div class="pay-note" style="text-align:left">약정서가 접수됐어요 (약정번호 ${esc(contractId)}). 아래 버튼으로 PDF로 저장해 보관하세요.</div><button class="btn-main" id="savePdf">약정서 PDF로 저장</button>` : ''}<a href="${location.pathname}">처음으로</a></div>`;
+  if (contractId) $('#savePdf').onclick = () => printContract(lastContract, contractId);
+  window.scrollTo(0,0);
+}
+
+/* ---------- 약정서만 작성 (?contract) ---------- */
+function showContract(){
+  $('#bookView').classList.add('hide'); $('#bar').classList.add('hide');
+  $('#contractView').classList.remove('hide'); $('#topTitle').textContent='약정서 작성';
+  const prods = CONFIG.categories.flatMap(c => c.items.filter(i => pkgOf(i.name)).map(i => ({ c, i })));
+  const drawProds = () => { const k0 = (document.querySelector('input[name=cvp]:checked')||{}).value;
+    $('#cvProducts').innerHTML = prods.map((x,k) => `<label><input type="radio" name="cvp" value="${k}" ${String(k)===k0?'checked':''}><span>${x.c.label.split(' ')[0]} ${x.i.name} · ${won(x.i.price)}</span></label>`).join(''); };
+  drawProds(); window.onPrices = () => { drawProds(); info(); }; Store.refresh().catch(()=>{});
+  const ui = makeContract($('#cvHost'));
+  let sel = null;
+  const info = () => { if (!sel) return; const p = pkgOf(sel.i.name); ui.setInfo({ product:`${sel.c.label} ${sel.i.name}`, minutes:sel.c.minutes, unit:Math.round(sel.i.price/p.count), total:sel.i.price, start:$('#cvStart').value, days:p.days, kids:sel.c.id==='kids' }); };
+  $('#cvProducts').onchange = e => { sel = prods[Number(e.target.value)]; info(); };
+  $('#cvStart').onchange = info;
+  setTimeout(() => ui.fit(), 50);
+  const msg = (t, ok) => { const el=$('#cvMsg'); el.textContent=t; el.className='msg ' + (ok?'ok':'err'); };
+  $('#cvSubmit').onclick = async () => {
+    if (!sel) return msg('이용권을 먼저 골라 주세요.');
+    const miss = ui.missing(); if (miss.length) return msg('남은 항목: ' + miss.join(', '));
+    const c = ui.get(); lastContract = c;
+    $('#cvSubmit').disabled = true; msg('제출 중…', true);
+    const r = await Store.member('contract', { contract: Object.assign({}, c, { itemId:sel.i.id, product:sel.i.name, category:sel.c.label, categoryLabel:sel.c.label.split(' ')[0] }) }).catch(() => ({ ok:false, error:'network' }));
+    $('#cvSubmit').disabled = false;
+    if (!r.ok) return msg(r.message || (r.error==='busy' ? '잠시 후 다시 시도해 주세요.' : '제출하지 못했어요. 잠시 후 다시 시도해 주세요.'));
+    $('#contractView').querySelector('.sec').innerHTML = `<div class="result"><div class="ic">✓</div><h2>약정서 제출 완료</h2>
+      <div style="color:var(--sub)">약정번호 ${esc(r.contractId)} · 원장님이 확인 후 회원 등록을 도와드려요.</div>
+      <button class="btn-main" id="savePdf2">약정서 PDF로 저장</button><a href="./?member">회원 예약으로 가기</a></div>`;
+    $('#savePdf2').onclick = () => printContract(lastContract, r.contractId);
+    window.scrollTo(0,0);
+  };
+}
+
+/* ---------- 관리자 (?admin) ---------- */
+async function showAdmin(){
+  $('#bookView').classList.add('hide'); $('#bar').classList.add('hide'); $('#foot').classList.add('hide');
+  $('#adminView').classList.remove('hide'); $('#topTitle').textContent='관리자';
+  if (!API) $('#keyBox').classList.add('hide');
+  const starts=slotStarts(); let draft={ weekly:{}, dates:{} }; let key=sessionStorage.getItem('yu_admin_key')||'';
+  const status = t => $('#adminStatus').textContent=t;
+  const drawWeek = () => {
+    let h='<tr><th></th>'+WEEK.map(w => `<th>${w}</th>`).join('')+'</tr>';
+    starts.forEach(t => { h+=`<tr><th>${hm(t)}</th>`+WEEK.map((_,d) => { const on=(draft.weekly[d]||[]).includes(t); return `<td><button data-d="${d}" data-h="${t}" class="${on?'blk':''}">${on?'불가':''}</button></td>`; }).join('')+'</tr>'; });
+    $('#weekGrid').innerHTML=h;
+  };
+  const dIn=$('#blkDate'); dIn.value=ymd(new Date());
+  const drawDate = () => {
+    const v=draft.dates[dIn.value];
+    $('#adminSlots').innerHTML = starts.map(t => { const on = v==='all' || (Array.isArray(v)&&v.includes(t)); return `<button data-h="${t}" class="${on?'blk':''}">${hm(t)}</button>`; }).join('');
+    const keys=Object.keys(draft.dates).filter(k => k>=ymd(new Date())).sort();
+    $('#dateBlockList').innerHTML = keys.length ? keys.map(k => `<div><span>${k} · ${draft.dates[k]==='all'?'하루 전체':draft.dates[k].map(hm).join(', ')}</span><button data-k="${k}">해제</button></div>`).join('') : '<div style="color:var(--sub)">막아둔 날짜가 없습니다.</div>';
+  };
+  const errText = e => ({ auth:'비밀번호가 맞지 않거나 아직 입력하지 않았어요.', locked:'비밀번호를 여러 번 틀려 15분 동안 잠겼어요. [내 이메일로 받기]를 누르면 잠금도 풀려요.', taken:'그 시간에는 다른 예약이 있어요.',
+    notfound:'대상을 찾지 못했어요. 새로고침해 주세요.', cancelled:'취소된 예약은 변경할 수 없어요.', invalid:'입력값이 올바르지 않아요.',
+    dupPhone:'같은 연락처로 등록된 회원이 이미 있어요.', noContract:'10회권·20회권 회원은 약정서가 있어야 등록돼요. 회원에게 약정서 작성 페이지를 보내 같은 연락처로 서명받거나, 종이 약정서를 받았으면 체크해 주세요.', noRemain:'남은 횟수가 없어요. 총 횟수를 늘린 뒤 예약해 주세요.', preview:'미리보기 모드에서는 쓸 수 없어요.' }[e] || ('오류: ' + e));
+  let rowsCache = [], editing = null;
+  const drawBookings = async () => {
+    $('#bookStatus').textContent = '';
+    const r = await Store.admin('list', key).catch(e => ({ ok:false, error:e.message }));
+    if (!r.ok){ rowsCache=[]; $('#bookingList').innerHTML=''; setUnlocked(false); $('#keyStatus').textContent = key ? errText(r.error) : ''; if (r.error!=='network') sessionStorage.removeItem('yu_admin_key'); return; }
+    setUnlocked(true); $('#keyStatus').textContent = '확인됐어요.';
+    rowsCache = r.rows || []; setSms(!!r.smsAuto); renderBookings(); drawMembers();
+  };
+  /* 기간 보기 + 10개씩 더보기 */
+  const PAGE = 10; let shown = PAGE, period = { from:'', to:'', key:'' };
+  const setPeriod = (from, to, k) => { period = { from, to, key:k||'' }; $('#pFrom').value = from; $('#pTo').value = to; shown = PAGE;
+    document.querySelectorAll('.period .pq button').forEach(b => b.classList.toggle('on', b.dataset.p===period.key)); renderBookings(); };
+  document.querySelector('.period .pq').onclick = e => { const p = e.target.dataset.p; if (!p) return; const n = new Date(); n.setHours(0,0,0,0);
+    if (p==='week'){ const s = new Date(n); s.setDate(n.getDate() - ((n.getDay()+6)%7)); const en = new Date(s); en.setDate(s.getDate()+6); return setPeriod(ymd(s), ymd(en), p); }
+    if (p==='month') return setPeriod(ymd(new Date(n.getFullYear(), n.getMonth(), 1)), ymd(new Date(n.getFullYear(), n.getMonth()+1, 0)), p);
+    if (p==='next') return setPeriod(ymd(new Date(n.getFullYear(), n.getMonth()+1, 1)), ymd(new Date(n.getFullYear(), n.getMonth()+2, 0)), p);
+    setPeriod('', '', 'all'); };
+  $('#pApply').onclick = () => { const f = $('#pFrom').value, t = $('#pTo').value;
+    if (f && t && f > t) return $('#pInfo').textContent = '시작일이 종료일보다 늦어요.'; setPeriod(f, t, ''); };
+  $('#bookMore').onclick = () => { shown += PAGE; renderBookings(); };
+  const renderBookings = () => {
+    const today=ymd(new Date()), all=$('#showPast').checked;
+    const from = period.from || (all || period.key==='all' ? '' : today), to = period.to;
+    const rows=rowsCache.filter(x => (all || x.status!=='취소') && (!from || x.date>=from) && (!to || x.date<=to)).sort((a,b) => (a.date+hm(a.hour)).localeCompare(b.date+hm(b.hour)));
+    const fmtD = s => { const d=new Date(s+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; };
+    $('#pInfo').textContent = `${from?fmtD(from):'처음'} ~ ${to?fmtD(to):'끝'} · ${rows.length}건${rows.length>shown?` 중 ${shown}건 표시`:''}${all?' (취소 포함)':''}`;
+    $('#bookMore').classList.toggle('hide', rows.length <= shown);
+    $('#bookMore').textContent = `더보기 (${Math.min(PAGE, rows.length-shown)}건 더 · 남은 ${rows.length-shown}건)`;
+    $('#bookingList').innerHTML = rows.length ? rows.slice(0, shown).map(x => { const dt=new Date(x.date+'T00:00:00');
+      return `<div class="bk ${x.status==='취소'?'cx':''}" data-id="${esc(x.id)}">
+        <div class="hd"><span class="st s-${esc(x.status)}">${esc(x.status)}</span>${dt.getMonth()+1}/${dt.getDate()} (${WEEK[dt.getDay()]}) ${hm(x.hour)} · ${esc(x.name)}${x.memberId?'<span class="tag mem">회원</span>':'<span class="tag">신규</span>'}</div>
+        <div class="meta">${esc(x.itemName||'')} · <a href="tel:${esc(x.phone)}">${esc(fmtPhone(String(x.phone||'')))}</a>${x.region?` · ${esc(x.region)}${x.school?', '+esc(x.school):''}`:''}${x.cal?' · <span style="color:var(--sub)">캘린더 등록됨</span>':''}${x.memberId?'':` · ${esc(x.gender||'')} ${esc(x.age||'')}<br>
+          불편: ${esc(x.area||'-')} · 통증 ${esc(x.pain)}/10 · 이력: ${esc([].concat(x.med||[]).join(', ')||'-')}${x.medDetail?` (${esc(x.medDetail)})`:''}`}
+          ${x.memo?`<br>요청: ${esc(x.memo)}`:''}${x.note?`<br><span style="color:var(--sub)">기록: ${esc(x.note)}</span>`:''}</div>
+        ${x.status==='취소'?'':`<div class="acts">${x.status==='신청'?'<button class="ok" data-a="confirm">확정</button>':''}<button data-a="edit">시간 변경</button>${x.status==='확정'?'<button data-a="noshow">노쇼</button>':''}<button class="no" data-a="cancel">예약 취소</button></div>`}
+        ${editing===x.id?changePanel(x):''}
+      </div>`; }).join('') : '<div class="note">이 기간에 표시할 예약이 없습니다.</div>';
+  };
+  /* 확정 문자 자동 발송 버튼 */
+  const setSms = on => { $('#smsBtn').setAttribute('aria-pressed', on ? 'true' : 'false'); $('#smsBtn').textContent = on ? '켜짐' : '꺼짐'; };
+  $('#smsBtn').onclick = async () => {
+    const on = $('#smsBtn').getAttribute('aria-pressed') !== 'true';
+    $('#smsStatus').textContent = '저장 중…';
+    const r = await Store.admin('setSms', key, { on }).catch(e => ({ ok:false, error:e.message }));
+    if (!r.ok) return $('#smsStatus').textContent = '저장하지 못했어요: ' + errText(r.error);
+    setSms(!!r.smsAuto); $('#smsStatus').textContent = r.smsAuto ? '자동 발송을 켰어요. (문자 서비스 연결 후 실제 발송)' : '자동 발송을 껏어요.';
+  };
+  $('#calResync').onclick = async () => {
+    if (!confirm('오늘 이후 예약을 구글 캘린더에 다시 맞출까요? (없는 일정은 만들고, 취소된 일정은 지워요)')) return;
+    $('#bookStatus').textContent = '캘린더 맞추는 중…';
+    const r = await Store.admin('calResync', key).catch(e => ({ ok:false, error:e.message }));
+    $('#bookStatus').textContent = r.ok ? `캘린더를 맞췄어요. (${r.count}건 확인)` : (r.message || errText(r.error));
+    if (r.ok) drawBookings();
+  };
+  let chgDate = '';
+  const changePanel = x => {
+    const d = chgDate || x.date;
+    const taken = h => rowsCache.some(o => o.id!==x.id && o.status!=='취소' && o.date===d && o.hour===h);
+    const coach = h => { const dow=new Date(d+'T00:00:00').getDay(), v=draft.dates[d]; return (draft.weekly[dow]||[]).includes(h) || v==='all' || (Array.isArray(v)&&v.includes(h)); };
+    return `<div class="chg"><div class="row"><b style="font-size:13px">새 날짜</b><input type="date" class="chgDate" value="${d}" min="${ymd(new Date())}" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px"></div>
+      <div class="slots">${starts.map(h => `<button data-h="${h}" class="${coach(h)?'coach':''} ${d===x.date&&h===x.hour?'on':''}" ${taken(h)?'disabled':''} title="${coach(h)?'막아둔 시간(관리자는 가능)':''}">${hm(h)}</button>`).join('')}</div>
+      <div class="note" style="margin-top:6px">줄 그은 시간은 다른 예약이 있는 시간, 점선은 내가 막아둔 시간이에요(관리자는 넣을 수 있어요). 시간을 누르면 바로 변경돼요.</div>
+      <div class="acts"><button data-a="close">닫기</button></div></div>`;
+  };
+  $('#showPast').onchange = () => { shown = PAGE; renderBookings(); };
+  $('#weekGrid').onclick = e => { const el=e.target.closest('button'); if(!el) return; const d=el.dataset.d, t=Number(el.dataset.h); const a=draft.weekly[d]||[]; draft.weekly[d]=a.includes(t)?a.filter(x => x!==t):[...a,t].sort((x,y)=>x-y); drawWeek(); status('저장하지 않은 변경이 있어요.'); };
+  dIn.onchange = drawDate;
+  $('#adminSlots').onclick = e => { const h=e.target.dataset.h; if(h===undefined) return; const t=Number(h); let v=draft.dates[dIn.value]; if(v==='all') v=starts.slice(); v=v||[]; v=v.includes(t)?v.filter(x => x!==t):[...v,t];
+    if (v.length) draft.dates[dIn.value] = v.length===starts.length ? 'all' : v.sort((a,c)=>a-c); else delete draft.dates[dIn.value]; drawDate(); status('저장하지 않은 변경이 있어요.'); };
+  $('#blkAllDay').onclick = () => { draft.dates[dIn.value]='all'; drawDate(); status('저장하지 않은 변경이 있어요.'); };
+  $('#dateBlockList').onclick = e => { const k=e.target.dataset.k; if(!k) return; delete draft.dates[k]; drawDate(); status('저장하지 않은 변경이 있어요.'); };
+  $('#bookingList').addEventListener('change', e => { if (e.target.classList.contains('chgDate')) { chgDate = e.target.value; renderBookings(); } });
+  $('#bookingList').onclick = async e => {
+    const card = e.target.closest('.bk'); if (!card) return; const id = card.dataset.id, x = rowsCache.find(r => r.id===id);
+    const a = e.target.dataset.a, h = e.target.closest('.chg') ? e.target.dataset.h : undefined;
+    const run = async (action, extra, msg) => { $('#bookStatus').textContent='처리 중…'; const r = await Store.admin(action, key, { id, ...extra }).catch(err => ({ ok:false, error:err.message }));
+      if (r.ok){ editing=null; chgDate=''; await drawBookings(); await Store.refresh().catch(()=>{}); $('#bookStatus').textContent=msg; } else $('#bookStatus').textContent=errText(r.error); };
+    if (a==='confirm') return run('confirm', {}, `${x.name}님 예약을 확정했어요.`);
+    if (a==='noshow'){ if(!confirm(`${x.name}님 ${x.date} ${hm(x.hour)} 예약을 노쇼로 처리할까요?\n회원이면 횟수가 돌아오지 않아요.`)) return; return run('noshow', {}, `${x.name}님 예약을 노쇼로 처리했어요.`); }
+    if (a==='cancel'){ if(!confirm(`${x.name}님 ${x.date} ${hm(x.hour)} 예약을 취소할까요?\n취소하면 그 시간이 다시 열려요.`)) return; return run('cancel', {}, `${x.name}님 예약을 취소했어요.`); }
+    if (a==='edit'){ editing = editing===id ? null : id; chgDate=''; return renderBookings(); }
+    if (a==='close'){ editing=null; chgDate=''; return renderBookings(); }
+    if (h!==undefined){ const nd = chgDate || x.date, nh = Number(h); if (nd===x.date && nh===x.hour) return;
+      if(!confirm(`${x.name}님 예약을 ${nd} ${hm(nh)}(으)로 바꿀까요?`)) return;
+      return run('update', { date:nd, hour:nh }, `${x.name}님 예약을 ${nd} ${hm(nh)}(으)로 바꿨어요. 손님께 변경 연락을 잊지 마세요.`); }
+  };
+  /* ----- 회원 관리 ----- */
+  let memCache = [], memBooking = null, mbDate = '';
+  $('#mfItems').innerHTML = CONFIG.categories.flatMap(c => c.items.map(i => `<option value="${esc(c.label.split(' ')[0]+' '+i.name)}">`)).join('');
+  const drawMembers = async () => {
+    const r = await Store.admin('members', key).catch(e => ({ ok:false, error:e.message }));
+    if (!r.ok){ memCache=[]; $('#memList').innerHTML = `<div class="note">${esc(errText(r.error))}</div>`; return; }
+    memCache = r.rows || []; renderMembers();
+  };
+  let memOpen = false;
+  $('#memMore').onclick = () => { memOpen = !memOpen; renderMembers(); };
+  const renderMembers = () => {
+    const today = ymd(new Date());
+    $('#memList').classList.toggle('hide', !memOpen);
+    $('#memMore').textContent = memOpen ? '회원 목록 접기' : `회원 목록 더보기 (${memCache.length}명)`;
+    if (!memOpen) { $('#memList').innerHTML = ''; return; }
+    $('#memList').innerHTML = memCache.length ? memCache.map(m => {
+      const expired = m.expires && m.expires < today;
+      return `<div class="bk ${m.status==='정지'?'cx':''}" data-mid="${esc(m.id)}">
+        <div class="hd">${esc(m.name)} <span class="tag mem">남은 ${m.remaining}회</span>${m.status==='정지'?'<span class="tag" style="background:#9ca3af">정지</span>':''}${expired?'<span class="tag" style="background:var(--red)">기간 만료</span>':''}</div>
+        <div class="meta"><a href="tel:${esc(m.phone)}">${esc(fmtPhone(String(m.phone)))}</a>${m.region?` · ${esc(m.region)}${m.school?', '+esc(m.school):''}`:''} · ${esc(m.item||'-')} · 총 ${m.total}회 (이전 사용 ${m.prev} · 예약 ${m.used})<br>
+          만료일 ${esc(m.expires||'없음')} · 약정 ${m.contract ? (m.contract==='종이' ? '종이' : '온라인 서명') : (pkgOf(m.item) ? '<b style="color:var(--red)">없음</b>' : '-')}${m.memo?` · ${esc(m.memo)}`:''}</div>
+        <div class="acts"><button class="ok" data-ma="book">대신 예약</button><button data-ma="add">횟수 추가</button><button data-ma="edit">수정</button><button class="mdel" data-ma="del" title="회원 삭제">회원 삭제</button></div>
+        ${memBooking===m.id?memBookPanel(m):''}
+      </div>`; }).join('') : '<div class="note">등록된 회원이 없어요. [+ 회원 등록]으로 추가하세요.</div>';
+  };
+  const memBookPanel = m => {
+    const d = mbDate || '';
+    const taken = h => rowsCache.some(o => o.status!=='취소' && o.date===d && o.hour===h);
+    const coach = h => { if(!d) return false; const dow=new Date(d+'T00:00:00').getDay(), v=draft.dates[d]; return (draft.weekly[dow]||[]).includes(h) || v==='all' || (Array.isArray(v)&&v.includes(h)); };
+    return `<div class="chg"><div class="row"><b style="font-size:13px">날짜</b><input type="date" class="mbDate" value="${d}" min="${ymd(new Date())}" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px"></div>
+      ${d?`<div class="slots">${starts.map(h => `<button data-mh="${h}" class="${coach(h)?'coach':''}" ${taken(h)?'disabled':''}>${hm(h)}</button>`).join('')}</div>`:'<div class="note">날짜를 먼저 고르세요.</div>'}
+      <div class="note" style="margin-top:6px">시간을 누르면 바로 '확정' 예약이 들어가고 횟수가 1회 줄어요. 당일·점선(막아둔 시간)도 관리자는 넣을 수 있어요.</div>
+      <div class="acts"><button data-ma="close">닫기</button></div></div>`;
+  };
+  const openMemForm = m => {
+    $('#memForm').classList.remove('hide');
+    $('#mfId').value = m ? m.id : ''; $('#mfName').value = m ? m.name : ''; $('#mfPhone').value = m ? fmtPhone(String(m.phone)) : '';
+    $('#mfItem').value = m ? m.item : ''; $('#mfExpires').value = m ? (m.expires||'') : ''; $('#mfTotal').value = m ? m.total : 10;
+    $('#mfPrev').value = m ? m.prev : 0; $('#mfPaper').checked = !!(m && m.contract==='종이'); $('#mfStatus').value = m ? m.status : '활성'; $('#mfMemo').value = m ? (m.memo||'') : '';
+    $('#mfRegion').value = m ? (m.region||'') : ''; $('#mfSchool').value = m ? (m.school||'') : '';
+   $('#memForm').scrollIntoView({ behavior:'smooth', block:'center' });
+  };
+  const mStatus = t => $('#memStatus').textContent = t;
+  $('#memNew').onclick = () => openMemForm(null);
+  $('#mfClose').onclick = () => $('#memForm').classList.add('hide');
+  $('#mfSave').onclick = async () => {
+    const member = { id:$('#mfId').value||undefined, name:$('#mfName').value.trim(), phone:$('#mfPhone').value.replace(/\D/g,''), item:$('#mfItem').value.trim(),
+      expires:$('#mfExpires').value, total:Number($('#mfTotal').value||0), prev:Number($('#mfPrev').value||0), status:$('#mfStatus').value, memo:$('#mfMemo').value.trim(), paperContract:$('#mfPaper').checked,
+      region:$('#mfRegion').value.trim(), school:$('#mfSchool').value.trim() };
+    mStatus('저장 중…');
+    const r = await Store.admin('memberSave', key, { member }).catch(e => ({ ok:false, error:e.message }));
+    if (!r.ok) return mStatus(r.message || errText(r.error));
+    $('#memForm').classList.add('hide'); await drawMembers();
+    mStatus(`${member.name}님 정보를 저장했어요.`);
+  };
+  $('#memList').addEventListener('change', e => { if (e.target.classList.contains('mbDate')) { mbDate = e.target.value; renderMembers(); } });
+  $('#memList').onclick = async e => {
+    const card = e.target.closest('.bk'); if (!card) return; const m = memCache.find(x => x.id===card.dataset.mid); if (!m) return;
+    const a = e.target.dataset.ma, h = e.target.dataset.mh;
+    if (a==='edit') return openMemForm(m);
+    if (a==='del'){
+      const up = rowsCache.filter(r => r.memberId===m.id && r.status!=='취소' && r.date>=ymd(new Date())).length;
+      if (!confirm(`${m.name}님(${fmtPhone(String(m.phone))}) 회원 정보를 삭제할까요?\n\n- 오늘 이후 예약 ${up}건은 취소되고 캘린더 일정도 지워져요.\n- 지난 예약 기록과 약정서는 시트에 남아요.\n- 되돌릴 수 없어요.`)) return;
+      mStatus('삭제 중…');
+      const r = await Store.admin('memberDelete', key, { id:m.id }).catch(err => ({ ok:false, error:err.message }));
+      if (!r.ok) return mStatus(r.message || errText(r.error));
+      memBooking = null; await drawBookings(); await Store.refresh().catch(()=>{});
+      return mStatus(`${r.name}님 회원 정보를 삭제했어요.${r.cancelled?` 예약 ${r.cancelled}건도 취소했어요.`:''}`);
+    }
+    if (a==='book'){ memBooking = memBooking===m.id ? null : m.id; mbDate=''; return renderMembers(); }
+    if (a==='close'){ memBooking=null; mbDate=''; return renderMembers(); }
+    if (a==='add'){ const n = Number(prompt(`${m.name}님에게 몇 회를 추가할까요? (재결제 등)`, '10')); if (!n || n<0) return;
+      mStatus('저장 중…'); const r = await Store.admin('memberSave', key, { member:{ ...m, total:m.total+n } }).catch(err => ({ ok:false, error:err.message }));
+      if (!r.ok) return mStatus(r.message || errText(r.error)); await drawMembers(); return mStatus(`${m.name}님 횟수를 ${n}회 추가했어요.`); }
+    if (h!==undefined){ const nh = Number(h);
+      if (!confirm(`${m.name}님 ${mbDate} ${hm(nh)} 예약을 넣을까요? (남은 ${m.remaining}회 → ${m.remaining-1}회)`)) return;
+      mStatus('예약 넣는 중…');
+      const r = await Store.admin('adminBook', key, { memberId:m.id, date:mbDate, hour:nh }).catch(err => ({ ok:false, error:err.message }));
+      if (!r.ok) return mStatus(errText(r.error));
+      memBooking=null; mbDate=''; await drawBookings(); await Store.refresh().catch(()=>{});
+      return mStatus(`${m.name}님 ${hm(nh)} 예약을 넣었어요.`); }
+  };
+
+  const drawPrices = () => {
+    $('#priceTable').innerHTML = '<tr><th>상품</th><th>판매가</th><th>정가(취소선)</th><th>이벤트가</th></tr>'
+      + allItems().map(({ c, i }) => `<tr><td>${esc(priceLabel(c, i))}</td>
+        <td><input type="number" min="1000" step="1000" data-p="${i.id}" data-f="price" value="${i.price}"></td>
+        <td><input type="number" min="0" step="1000" data-p="${i.id}" data-f="list" value="${i.list||''}" placeholder="없음"></td>
+        <td><input type="checkbox" aria-label="${esc(priceLabel(c, i))} 이벤트가 표시" data-p="${i.id}" data-f="event" ${i.event?'checked':''}></td></tr>`).join('');
+  };
+  $('#savePrices').onclick = async () => {
+    const prices = {}; let bad = '';
+    allItems().forEach(({ c, i }) => { const g = f => $(`#priceTable [data-p="${i.id}"][data-f="${f}"]`);
+      const price = Number(g('price').value), list = Number(g('list').value || 0);
+      if (!(price > 0) || list < 0) bad = bad || priceLabel(c, i);
+      prices[i.id] = { price, list, event: g('event').checked }; });
+    if (bad) return $('#priceStatus').textContent = `${bad} 금액을 확인해 주세요.`;
+    if (!confirm('가격을 저장할까요? 새 신청부터 바로 적용돼요.')) return;
+    $('#priceStatus').textContent = '저장 중…';
+    const r = await Store.admin('setPrices', key, { prices }).catch(e => ({ ok:false, error:e.message }));
+    if (!r.ok) return $('#priceStatus').textContent = r.message || ('저장하지 못했어요: ' + errText(r.error));
+    applyPrices(r.prices); drawPrices(); $('#priceStatus').textContent = '저장했어요. 예약 화면에 바로 반영돼요.';
+  };
+
+  $('#saveBlocks').onclick = async () => { status('저장 중…'); const r = await Store.saveBlocks(draft, key).catch(e => ({ ok:false, error:e.message }));
+    status(r.ok ? '저장했어요. 예약 화면에 바로 반영됩니다.' : '저장하지 못했어요: ' + errText(r.error)); };
+  const setUnlocked = on => {
+    $('#adminBody').classList.toggle('hide', !on); $('#adminLogout').classList.toggle('hide', !on);
+    $('#recoverBtn').classList.toggle('hide', on); $('#adminKey').closest('.row').classList.toggle('hide', on);
+  };
+  $('#keyOk').onclick = () => { key=$('#adminKey').value.trim(); if (!key) { $('#keyStatus').textContent='비밀번호를 입력해 주세요.'; return; } $('#keyStatus').textContent='확인 중…'; sessionStorage.setItem('yu_admin_key', key); drawBookings(); };
+  $('#adminLogout').onclick = () => { key=''; sessionStorage.removeItem('yu_admin_key'); $('#adminKey').value=''; rowsCache=[]; memCache=[]; setUnlocked(false); $('#keyStatus').textContent='로그아웃했어요.'; };
+  $('#adminKey').addEventListener('keydown', e => { if (e.key==='Enter') $('#keyOk').click(); });
+  $('#recoverBtn').onclick = async () => {
+    if (!API) return $('#keyStatus').textContent = errText('preview');
+    if (!confirm('관리자 비밀번호를 시트 주인 이메일로 보낼까요?')) return;
+    $('#keyStatus').textContent = '보내는 중…';
+    const r = await Store.member('adminRecover', {}).catch(() => ({ ok:false }));
+    $('#keyStatus').textContent = !r.ok ? '보내지 못했어요. 잠시 후 다시 시도해 주세요.'
+      : r.sent ? `${r.to} 메일함에서 비밀번호를 확인하세요. (잠금도 풀렸어요)`
+      : `방금 ${r.to}(으)로 보냈어요. 메일함을 확인하고, 다시 보내려면 ${r.wait}분 뒤에 눌러 주세요.`;
+  };
+  $('#adminKey').value = key; setUnlocked(false);
+  try { await Store.refresh(); draft = JSON.parse(JSON.stringify(Store.blocks)); } catch(e){ status('현재 설정을 불러오지 못했어요: ' + e.message); }
+  drawWeek(); drawDate(); drawPrices(); drawBookings();
+}
+
+/* ---------- 예약 오픈 기간 (이번 달 + 매달 10일 낮 12시에 다음 달) ---------- */
+function calcOpenUntil(){
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hourCycle:'h23' })
+    .formatToParts(new Date()).map(x => [x.type, x.value]));
+  let y = +p.year, m = +p.month; const d = +p.day, h = +p.hour;
+  if (d > CONFIG.openDay || (d === CONFIG.openDay && h >= CONFIG.openAtHour)) { m++; if (m > 12) { m = 1; y++; } }
+  return `${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}`;
+}
+function openUntil(){ return Store.openUntil || calcOpenUntil(); }
+function openNoticeText(){
+  const u = openUntil();
+  return `지금은 ${Number(u.slice(5,7))}월 ${Number(u.slice(8,10))}일까지 예약할 수 있어요. 다음 달 예약은 매달 ${CONFIG.openDay}일 낮 12시에 열려요.`;
+}
+function renderOpenNotice(){ document.querySelectorAll('.opennote').forEach(el => el.textContent = openNoticeText()); }
+
+/* ---------- 기존 회원 예약 (?member) ---------- */
+function showMember(){
+  $('#bookView').classList.add('hide'); $('#bar').classList.add('hide');
+  $('#memberView').classList.remove('hide'); $('#topTitle').textContent='회원 예약';
+  let cred = null, mem = null;
+  const ms = { view:new Date(), date:null, hour:null }; ms.view.setDate(1); ms.view.setHours(0,0,0,0);
+  const msg = (id, t, ok) => { const el=$(id); el.textContent=t; el.className='msg ' + (ok?'ok':'err'); };
+  const mErr = e => ({ auth:'등록된 회원 정보와 맞지 않아요. 이름과 연락처를 다시 확인해 주세요.',
+    taken:'방금 다른 예약이 들어왔어요. 다른 시간을 골라 주세요.', noRemain:'남은 횟수가 없어요. 원장님께 문의해 주세요.', expired:'이용권 만료일 이후 날짜는 예약할 수 없어요.',
+    sameday:CONFIG.sameDayNotice, notOpen:openNoticeText(), preview:'구글 시트가 연결되지 않았어요.', network:'연결이 불안정해요. 잠시 후 다시 시도해 주세요.' }[e] || '문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
+  const today = () => ymd(new Date());
+  const canBookDay = d => d > today() && (!mem.expires || d <= mem.expires) && slotStarts().some(h => !blockedReason(d,h));
+  const renderHome = () => {
+    $('#mLogin').classList.add('hide'); $('#mHome').classList.remove('hide');
+    $('#mWho').textContent = `${mem.name}님`; $('#mItem').textContent = `${mem.item||'이용권'} · 총 ${mem.total}회`;
+    $('#mExp').textContent = mem.expires ? `만료일 ${mem.expires}` : '만료일 없음';
+    $('#mRemain').innerHTML = `${Math.max(0,mem.remaining)}<small>회 남음</small>`;
+    $('#mUpcoming').innerHTML = mem.upcoming.length ? mem.upcoming.map(u => { const dt=new Date(u.date+'T00:00:00'); return `<div class="up"><span>${dt.getMonth()+1}월 ${dt.getDate()}일 (${WEEK[dt.getDay()]}) ${hm(u.hour)}</span><span class="st s-${esc(u.status)}">${esc(u.status)}</span></div>`; }).join('') : '<div class="note">예정된 예약이 없어요.</div>';
+    const blocked = mem.remaining <= 0 || (mem.expires && mem.expires <= today());
+    $('#mBookArea').classList.toggle('hide', blocked); $('#mNoRemain').classList.toggle('hide', !blocked);
+    renderCal(); renderSlots();
+  };
+  const renderCal = () => {
+    const y=ms.view.getFullYear(), m=ms.view.getMonth(); $('#mMonth').textContent = `${y}년 ${m+1}월`;
+    const first=new Date(y,m,1).getDay(), last=new Date(y,m+1,0).getDate(), maxD=new Date(openUntil()+'T00:00:00');
+    let html = WEEK.map((w,i) => `<div class="w ${i===0?'sun':i===6?'sat':''}">${w}</div>`).join('');
+    for (let i=0;i<first;i++) html+='<div></div>';
+    for (let d=1; d<=last; d++){ const dt=new Date(y,m,d), s=ymd(dt); const open = dt<=maxD && canBookDay(s);
+      html += `<button class="day ${s===today()?'today':''} ${s===ms.date?'on':''}" data-d="${s}" ${open?'':'disabled'}>${d}</button>`; }
+    $('#mCal').innerHTML = html;
+    const nowM=new Date(); nowM.setDate(1); nowM.setHours(0,0,0,0); $('#mPrev').disabled = ms.view <= nowM;
+    $('#mNext').disabled = ms.view >= new Date(maxD.getFullYear(), maxD.getMonth(), 1);
+  };
+  const renderSlots = () => {
+    if (!ms.date){ $('#mSlots').innerHTML=''; $('#mSlotLabel').textContent='날짜를 먼저 선택해 주세요.'; $('#mBookBtn').disabled=true; return; }
+    const d=new Date(ms.date+'T00:00:00'); $('#mSlotLabel').textContent = `${d.getMonth()+1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) 예약 가능한 시간`;
+    $('#mSlots').innerHTML = slotStarts().map(h => `<button data-h="${h}" class="${h===ms.hour?'on':''}" ${blockedReason(ms.date,h)?'disabled':''}>${hm(h)}</button>`).join('');
+    $('#mBookBtn').disabled = ms.hour===null;
+    $('#mBookBtn').textContent = ms.hour===null ? '예약하기' : `${d.getMonth()+1}/${d.getDate()} ${hm(ms.hour)} 예약하기 (1회 차감)`;
+  };
+  $('#mPrev').onclick = () => { ms.view.setMonth(ms.view.getMonth()-1); renderCal(); };
+  $('#mNext').onclick = () => { ms.view.setMonth(ms.view.getMonth()+1); renderCal(); };
+  $('#mCal').onclick = e => { const s=e.target.dataset.d; if(!s) return; ms.date=s; ms.hour=null; renderCal(); renderSlots(); };
+  $('#mSlots').onclick = e => { const h=e.target.dataset.h; if(h===undefined) return; ms.hour=Number(h); renderSlots(); };
+  $('#mLoginBtn').onclick = async () => {
+    const c = { name:$('#mName').value.trim(), phone:$('#mPhone').value.replace(/\D/g,'') };
+    if (!c.name || !/^01\d{8,9}$/.test(c.phone)) return msg('#mLoginMsg', '이름과 연락처를 모두 입력해 주세요.');
+    $('#mLoginBtn').disabled = true; msg('#mLoginMsg', '확인 중…', true);
+    const r = await Store.member('memberLogin', c).catch(() => ({ ok:false, error:'network' }));
+    $('#mLoginBtn').disabled = false;
+    if (!r.ok) return msg('#mLoginMsg', mErr(r.error));
+    cred = c; mem = r.member; msg('#mLoginMsg','');
+    await Store.refresh().catch(()=>{}); renderHome();
+  };
+  $('#mPhone').addEventListener('keydown', e => { if (e.key==='Enter') $('#mLoginBtn').click(); });
+  $('#mBookBtn').onclick = async () => {
+    if (ms.hour===null) return;
+    $('#mBookBtn').disabled = true; msg('#mBookMsg', '예약 중…', true);
+    const r = await Store.member('memberBook', { ...cred, date:ms.date, hour:ms.hour, memo:$('#mMemo').value.trim() }).catch(() => ({ ok:false, error:'network' }));
+    if (!r.ok){ msg('#mBookMsg', mErr(r.error)); if (r.error==='auth'){ $('#mLogout').click(); return; }
+      await Store.refresh().catch(()=>{}); ms.hour=null; renderCal(); renderSlots(); return; }
+    const done = `${ms.date} ${hm(ms.hour)}`; mem = r.member; ms.date=null; ms.hour=null; $('#mMemo').value='';
+    await Store.refresh().catch(()=>{}); renderHome(); msg('#mBookMsg', `${done} 예약이 확정됐어요. 남은 횟수 ${mem.remaining}회`, true);
+  };
+  $('#mLogout').onclick = () => { cred=null; mem=null; ms.date=null; ms.hour=null; $('#mHome').classList.add('hide'); $('#mLogin').classList.remove('hide'); };
+}
+
+/* ---------- 시작 ---------- */
+if (!API) $('#demoFlag').classList.remove('hide');
+document.querySelectorAll('.sameday').forEach(el => { el.innerHTML = `${esc(CONFIG.sameDayNotice)}<br><span class="opennote"></span>`; });
+renderOpenNotice();
+const QS = new URLSearchParams(location.search);
+if (QS.has('admin')) showAdmin();
+else if (QS.has('member')) showMember();
+else if (QS.has('contract')) showContract();
+else { renderItems(); go(1); if (API) Store.refresh().catch(()=>{}); }
+</script>
+</body>
+</html>
