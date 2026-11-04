@@ -405,8 +405,11 @@ function calOn_() { return PropertiesService.getScriptProperties().getProperty('
 function calendar_() { return CalendarApp.getCalendarById(PropertiesService.getScriptProperties().getProperty('CALENDAR_ID') || CAL_DEFAULT); }
 function manwon_(n) { n = Number(n) || 0; return n ? String(Math.round(n / 1000) / 10) : ''; }
 function fmtPhone_(p) { p = digits_(p); return p.length === 11 ? p.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') : p.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'); }
-function packagePrice_(item) {   // 회원 이용권 이름(예: '일반 20회권')으로 현재 가격표 금액을 찾는다
-  const p = readPrices_(), id = Object.keys(p).find(k => p[k].name === String(item).trim() || p[k].name.replace('일반 ', '성인 ') === String(item).trim());
+function packagePrice_(item) {   // 회원 이용권 이름으로 현재 가격표 금액을 찾는다
+  // 예: '일반 20회권', '성인 1회권', '학생 키즈 웰컴 스트레칭', '학생 10회권' (학생·키즈가 들어 있으면 키즈 가격)
+  const s = String(item || '').trim(), kids = /학생|키즈/.test(s), strip = t => t.replace(/^((일반|성인|학생|키즈)[\s·]*)+/, '').trim();
+  const p = readPrices_(), base = strip(s);
+  const id = Object.keys(p).find(k => k.indexOf(kids ? 'k-' : 'a-') === 0 && (p[k].name === s || strip(p[k].name) === base));
   return id ? p[id].price : 0;
 }
 function calTitle_(b, rows, members) {
@@ -415,7 +418,7 @@ function calTitle_(b, rows, members) {
   const paid = calShow_(b);
   const where = [String(r[C.region] || (m && m.region) || '').trim(), String(r[C.school] || (m && m.school) || '').trim()].filter(String).join(', ');
   let count = '';
-  if (m && m.total) {
+  if (m && m.total && packageOf_(m.item)) {   // 회차는 10·20회권만
     const mine = rows.filter(x => x.memberId === m.id && x.active && x.status !== '신청').sort((a, c) => (a.date + hm_(a.hour)).localeCompare(c.date + hm_(c.hour)));
     count = m.total + '/' + (m.prev + mine.findIndex(x => x.id === b.id) + 1);
   } else { const pkg = packageOf_(r[C.item]); if (pkg) count = pkg.count + '/1'; }
