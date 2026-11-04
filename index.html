@@ -48,6 +48,9 @@
   .tag{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--purple);border-radius:999px;padding:3px 9px;margin-left:6px;vertical-align:2px}
 .tag.ev{background:#fff;color:var(--blue-d);border:1px solid var(--blue);padding:2px 8px}
 .ptab{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+.admin .memoIn{width:100%;min-height:64px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:13.5px;background:#fff;resize:vertical;box-sizing:border-box}
+.admin .memoLbl{display:block;font-size:13px;font-weight:800;margin-bottom:4px}
+.admin .memoLbl small{font-weight:500;color:var(--sub)}
 .period{margin:10px 0 4px;display:grid;gap:6px}
 .period .row{gap:6px;flex-wrap:wrap;align-items:center}
 .period input[type=date]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13.5px;max-width:150px}
@@ -1048,9 +1051,9 @@ async function showAdmin(){
         <div class="hd"><span class="st s-${esc(x.status)}">${esc(x.status)}</span>${dt.getMonth()+1}/${dt.getDate()} (${WEEK[dt.getDay()]}) ${hm(x.hour)} · ${esc(x.name)}${x.memberId?'<span class="tag mem">회원</span>':'<span class="tag">신규</span>'}</div>
         <div class="meta">${esc(x.itemName||'')} · <a href="tel:${esc(x.phone)}">${esc(fmtPhone(String(x.phone||'')))}</a>${x.region?` · ${esc(x.region)}${x.school?', '+esc(x.school):''}`:''}${x.cal?' · <span style="color:var(--sub)">캘린더 등록됨</span>':''}${x.memberId?'':` · ${esc(x.gender||'')} ${esc(x.age||'')}<br>
           불편: ${esc(x.area||'-')} · 통증 ${esc(x.pain)}/10 · 이력: ${esc([].concat(x.med||[]).join(', ')||'-')}${x.medDetail?` (${esc(x.medDetail)})`:''}`}
-          ${x.memo?`<br>요청: ${esc(x.memo)}`:''}${x.note?`<br><span style="color:var(--sub)">기록: ${esc(x.note)}</span>`:''}</div>
-        ${x.status==='취소'?'':`<div class="acts">${x.status==='신청'?'<button class="ok" data-a="confirm">확정</button>':''}<button data-a="edit">시간 변경</button>${x.status==='확정'?'<button data-a="noshow">노쇼</button>':''}<button class="no" data-a="cancel">예약 취소</button></div>`}
-        ${editing===x.id?changePanel(x):''}
+          ${x.memo?`<br>요청: ${esc(x.memo)}`:''}${x.calMemo?`<br><b>메모:</b> ${esc(x.calMemo).replace(/\n/g,'<br>')}`:''}${x.note?`<br><span style="color:var(--sub)">기록: ${esc(x.note)}</span>`:''}</div>
+        ${x.status==='취소'?'':`<div class="acts">${x.status==='신청'?'<button class="ok" data-a="confirm">확정</button>':''}<button data-a="edit">시간 변경</button>${x.status==='확정'?'<button data-a="noshow">노쇼</button>':''}<button data-a="memo">${x.calMemo?'메모 수정':'메모'}</button><button class="no" data-a="cancel">예약 취소</button></div>`}
+        ${editing===x.id?changePanel(x):''}${memoEdit===x.id?memoPanel(x):''}
       </div>`; }).join('') : '<div class="note">이 기간에 표시할 예약이 없습니다.</div>';
   };
   /* 확정 문자 자동 발송 버튼 */
@@ -1069,7 +1072,10 @@ async function showAdmin(){
     $('#bookStatus').textContent = r.ok ? `캘린더를 맞췄어요. (${r.count}건 확인)` : (r.message || errText(r.error));
     if (r.ok) drawBookings();
   };
-  let chgDate = '';
+  let chgDate = '', memoEdit = null;
+  const memoPanel = x => `<div class="chg"><label class="memoLbl">메모 <small>(캘린더 일정 설명 맨 위에 들어가요)</small></label>
+      <textarea class="memoIn" maxlength="300" placeholder="예: 오른쪽 어깨 위주, 보호자 동반">${esc(x.calMemo||'')}</textarea>
+      <div class="acts"><button class="ok" data-a="memoSave">메모 저장</button><button data-a="memoClose">닫기</button></div></div>`;
   const changePanel = x => {
     const d = chgDate || x.date;
     const taken = h => rowsCache.some(o => o.id!==x.id && o.status!=='취소' && o.date===d && o.hour===h);
@@ -1095,14 +1101,18 @@ async function showAdmin(){
     if (a==='confirm') return run('confirm', {}, `${x.name}님 예약을 확정했어요.`);
     if (a==='noshow'){ if(!confirm(`${x.name}님 ${x.date} ${hm(x.hour)} 예약을 노쇼로 처리할까요?\n회원이면 횟수가 돌아오지 않아요.`)) return; return run('noshow', {}, `${x.name}님 예약을 노쇼로 처리했어요.`); }
     if (a==='cancel'){ if(!confirm(`${x.name}님 ${x.date} ${hm(x.hour)} 예약을 취소할까요?\n취소하면 그 시간이 다시 열려요.`)) return; return run('cancel', {}, `${x.name}님 예약을 취소했어요.`); }
-    if (a==='edit'){ editing = editing===id ? null : id; chgDate=''; return renderBookings(); }
+    if (a==='edit'){ editing = editing===id ? null : id; memoEdit = null; chgDate=''; return renderBookings(); }
+    if (a==='memo'){ memoEdit = memoEdit===id ? null : id; editing = null; return renderBookings(); }
+    if (a==='memoClose'){ memoEdit = null; return renderBookings(); }
+    if (a==='memoSave'){ const v = card.querySelector('.memoIn').value.trim(); memoEdit = null;
+      return run('setMemo', { memo:v }, v ? `${x.name}님 예약에 메모를 저장했어요.${x.cal?' 캘린더에도 넣었어요.':''}` : `${x.name}님 예약 메모를 지웠어요.`); }
     if (a==='close'){ editing=null; chgDate=''; return renderBookings(); }
     if (h!==undefined){ const nd = chgDate || x.date, nh = Number(h); if (nd===x.date && nh===x.hour) return;
       if(!confirm(`${x.name}님 예약을 ${nd} ${hm(nh)}(으)로 바꿀까요?`)) return;
       return run('update', { date:nd, hour:nh }, `${x.name}님 예약을 ${nd} ${hm(nh)}(으)로 바꿨어요. 손님께 변경 연락을 잊지 마세요.`); }
   };
   /* ----- 회원 관리 ----- */
-  let memCache = [], memBooking = null, mbDate = '';
+  let memCache = [], memBooking = null, mbDate = '', mbMemo = '';
   $('#mfItems').innerHTML = CONFIG.categories.flatMap(c => c.items.map(i => `<option value="${esc(c.label.split(' ')[0]+' '+i.name)}">`)).join('');
   const drawMembers = async () => {
     const r = await Store.admin('members', key).catch(e => ({ ok:false, error:e.message }));
@@ -1130,7 +1140,9 @@ async function showAdmin(){
     const d = mbDate || '';
     const taken = h => rowsCache.some(o => o.status!=='취소' && o.date===d && o.hour===h);
     const coach = h => { if(!d) return false; const dow=new Date(d+'T00:00:00').getDay(), v=draft.dates[d]; return (draft.weekly[dow]||[]).includes(h) || v==='all' || (Array.isArray(v)&&v.includes(h)); };
-    return `<div class="chg"><div class="row"><b style="font-size:13px">날짜</b><input type="date" class="mbDate" value="${d}" min="${ymd(new Date())}" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px"></div>
+    return `<div class="chg"><label class="memoLbl">메모 <small>(캘린더 일정 설명 맨 위에 들어가요 · 선택)</small></label>
+      <textarea class="mbMemo memoIn" maxlength="300" placeholder="예: 오른쪽 어깨 위주, 보호자 동반">${esc(mbMemo)}</textarea>
+      <div class="row" style="margin-top:8px"><b style="font-size:13px">날짜</b><input type="date" class="mbDate" value="${d}" min="${ymd(new Date())}" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px"></div>
       ${d?`<div class="slots">${starts.map(h => `<button data-mh="${h}" class="${coach(h)?'coach':''}" ${taken(h)?'disabled':''}>${hm(h)}</button>`).join('')}</div>`:'<div class="note">날짜를 먼저 고르세요.</div>'}
       <div class="note" style="margin-top:6px">시간을 누르면 바로 '확정' 예약이 들어가고 횟수가 1회 줄어요. 당일·점선(막아둔 시간)도 관리자는 넣을 수 있어요.</div>
       <div class="acts"><button data-ma="close">닫기</button></div></div>`;
@@ -1156,6 +1168,7 @@ async function showAdmin(){
     $('#memForm').classList.add('hide'); await drawMembers();
     mStatus(`${member.name}님 정보를 저장했어요.`);
   };
+  $('#memList').addEventListener('input', e => { if (e.target.classList.contains('mbMemo')) mbMemo = e.target.value; });
   $('#memList').addEventListener('change', e => { if (e.target.classList.contains('mbDate')) { mbDate = e.target.value; renderMembers(); } });
   $('#memList').onclick = async e => {
     const card = e.target.closest('.bk'); if (!card) return; const m = memCache.find(x => x.id===card.dataset.mid); if (!m) return;
@@ -1170,7 +1183,7 @@ async function showAdmin(){
       memBooking = null; await drawBookings(); await Store.refresh().catch(()=>{});
       return mStatus(`${r.name}님 회원 정보를 삭제했어요.${r.cancelled?` 예약 ${r.cancelled}건도 취소했어요.`:''}`);
     }
-    if (a==='book'){ memBooking = memBooking===m.id ? null : m.id; mbDate=''; return renderMembers(); }
+    if (a==='book'){ memBooking = memBooking===m.id ? null : m.id; mbDate=''; mbMemo=''; return renderMembers(); }
     if (a==='close'){ memBooking=null; mbDate=''; return renderMembers(); }
     if (a==='add'){ const n = Number(prompt(`${m.name}님에게 몇 회를 추가할까요? (재결제 등)`, '10')); if (!n || n<0) return;
       mStatus('저장 중…'); const r = await Store.admin('memberSave', key, { member:{ ...m, total:m.total+n } }).catch(err => ({ ok:false, error:err.message }));
@@ -1178,9 +1191,9 @@ async function showAdmin(){
     if (h!==undefined){ const nh = Number(h);
       if (!confirm(`${m.name}님 ${mbDate} ${hm(nh)} 예약을 넣을까요? (남은 ${m.remaining}회 → ${m.remaining-1}회)`)) return;
       mStatus('예약 넣는 중…');
-      const r = await Store.admin('adminBook', key, { memberId:m.id, date:mbDate, hour:nh }).catch(err => ({ ok:false, error:err.message }));
+      const r = await Store.admin('adminBook', key, { memberId:m.id, date:mbDate, hour:nh, calMemo:mbMemo.trim() }).catch(err => ({ ok:false, error:err.message }));
       if (!r.ok) return mStatus(errText(r.error));
-      memBooking=null; mbDate=''; await drawBookings(); await Store.refresh().catch(()=>{});
+      memBooking=null; mbDate=''; mbMemo=''; await drawBookings(); await Store.refresh().catch(()=>{});
       return mStatus(`${m.name}님 ${hm(nh)} 예약을 넣었어요.`); }
   };
 

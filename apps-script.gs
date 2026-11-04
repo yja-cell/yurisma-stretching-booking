@@ -30,9 +30,9 @@ const MAX_ACTIVE_PER_PHONE = 3, MAX_BOOKINGS_PER_HOUR = 15, MAX_ADMIN_FAILS = 5,
 const RECOVER_COOLDOWN_MIN = 10;
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 const BOOK_H = ['접수시각', '예약번호', '상태', '예약일', '시간', '구분', '이용권', '금액', '이름', '연락처', '성별', '연령대',
-  '불편 부위', '통증(0-10)', '진료·수술·질환 이력', '이력 상세', '방문 경로', '요청사항', '필수동의', '관리 기록', '회원번호', '거주지', '학교', '캘린더 일정'];
+  '불편 부위', '통증(0-10)', '진료·수술·질환 이력', '이력 상세', '방문 경로', '요청사항', '필수동의', '관리 기록', '회원번호', '거주지', '학교', '캘린더 일정', '메모(캘린더)'];
 const C = { created: 0, id: 1, status: 2, date: 3, time: 4, cat: 5, item: 6, price: 7, name: 8, phone: 9, gender: 10, age: 11,
-  area: 12, pain: 13, med: 14, medDetail: 15, route: 16, memo: 17, agreed: 18, note: 19, member: 20, region: 21, school: 22, cal: 23 };
+  area: 12, pain: 13, med: 14, medDetail: 15, route: 16, memo: 17, agreed: 18, note: 19, member: 20, region: 21, school: 22, cal: 23, calMemo: 24 };
 const MEM_H = ['회원번호', '이름', '연락처', '이용권', '총 횟수', '이전 사용', '예약 사용', '남은 횟수', '만료일', '상태', '메모', '등록일', '약정서', '거주지', '학교'];
 const M = { id: 0, name: 1, phone: 2, item: 3, total: 4, prev: 5, used: 6, remain: 7, expires: 8, status: 9, memo: 10, created: 11, contract: 12, region: 13, school: 14 };
 // 구글 캘린더 '이솔강사님' (스크립트 속성 CALENDAR_ID로 바꿀 수 있음, CALENDAR_SYNC=off면 연동 중지)
@@ -100,13 +100,14 @@ function doPost(e) {
   if (d.action === 'memberBook') return json_(memberBook_(d));
   if (d.action === 'adminRecover') return json_(adminRecover_());
   if (d.action === 'contract') return json_(contractOnly_(d));
-  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1 };
+  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1, setMemo: 1 };
   if (!adminActions[d.action]) return json_({ ok: false, error: 'unknown' });
   const auth = checkAdmin_(d.key);
   if (!auth.ok) return json_(auth);
   switch (d.action) {
     case 'setBlocks': writeBlocks_(d.blocks || {}); return json_({ ok: true });
     case 'list': return json_({ ok: true, today: today_(), rows: listBookings_(), smsAuto: smsAuto_() });
+    case 'setMemo': return json_(setMemo_(String(d.id || ''), d.memo));
     case 'setSms': PropertiesService.getScriptProperties().setProperty('SMS_AUTO', d.on ? 'on' : 'off'); return json_({ ok: true, smsAuto: smsAuto_() });
     case 'calResync': return json_(calResyncAll_());
     case 'update': return json_(update_(d));
@@ -355,7 +356,7 @@ function adminBook_(d) {
     const id = newId_('YM');
     appendBooking_({ id: id, status: '확정', date: d.date, hour: hour, cat: '회원', item: m.item, price: '', name: m.name, phone: m.phone,
       gender: '', age: '', area: '', pain: '', med: '', medDetail: '', route: '', memo: safe_(d.memo || ''), agreed: '회원', note: '관리자 입력', member: m.id,
-      region: m.region, school: m.school });
+      region: m.region, school: m.school, calMemo: cleanMemo_(d.calMemo) });
     recalc_(m.id);
     return { ok: true, id: id };
   }));
@@ -452,7 +453,8 @@ function calSyncCore_(id, ctx) {
   }
   const start = new Date(b.date + 'T' + hm_(b.hour) + ':00+09:00'), end = new Date(start.getTime() + SLOT_MIN * 60000);
   const title = calTitle_(b, ctx.rows, ctx.members);
-  const desc = '예약번호 ' + b.id + '\n이용권 ' + (b.r[C.item] || '') + ' · 상태 ' + b.status + '\n유리스마 스트레칭 예약 페이지에서 자동 등록';
+  const memo = String(b.r[C.calMemo] || '').trim();   // 관리자 메모는 설명 맨 위에
+  const desc = (memo ? memo + '\n\n' : '') + '예약번호 ' + b.id + '\n이용권 ' + (b.r[C.item] || '') + ' · 상태 ' + b.status + '\n유리스마 스트레칭 예약 페이지에서 자동 등록';
   let ev = found[0] || null;
   found.slice(1).forEach(e => { try { e.deleteEvent(); } catch (er) {} });   // 중복 일정 정리
   if (ev) { if (ev.getTitle() !== title) ev.setTitle(title); if (ev.getStartTime().getTime() !== start.getTime()) ev.setTime(start, end); if (ev.getDescription() !== desc) ev.setDescription(desc); }
@@ -556,8 +558,19 @@ function appendBooking_(b) {
   sheet_('예약', BOOK_H).appendRow([
     Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), b.id, b.status, "'" + b.date, "'" + hm_(b.hour), safe_(b.cat), safe_(b.item),
     Number(b.price) || '', safe_(b.name), "'" + b.phone, safe_(b.gender), safe_(b.age), safe_(b.area), b.pain === '' ? '' : Number(b.pain) || 0,
-    safe_(b.med), safe_(b.medDetail), safe_(b.route), safe_(b.memo), b.agreed, safe_(b.note), b.member || '', safe_(b.region || ''), safe_(b.school || ''), ''
+    safe_(b.med), safe_(b.medDetail), safe_(b.route), safe_(b.memo), b.agreed, safe_(b.note), b.member || '', safe_(b.region || ''), safe_(b.school || ''), '', b.calMemo || ''
   ]);
+}
+function cleanMemo_(v) { return safe_(String(v || '').replace(/\r/g, '').trim().slice(0, 300)); }
+/* 관리자 메모: 예약에 저장하고 캘린더 일정 설명 맨 위에 넣는다 */
+function setMemo_(id, memo) {
+  const res = withLock_(() => {
+    const me = bookingRows_().find(r => r.id === id); if (!me) return { ok: false, error: 'notfound' };
+    sheet_('예약', BOOK_H).getRange(me.row, C.calMemo + 1).setValue(cleanMemo_(memo));
+    return { ok: true, id: me.id };
+  });
+  if (res.ok) calSync_(res.id);
+  return res;
 }
 function slotTaken_(rows, date, hour, exceptId) { return rows.some(r => r.active && r.id !== exceptId && r.date === date && r.hour === hour); }
 function readBooked_() {
@@ -569,7 +582,7 @@ function listBookings_() {
     id: b.id, status: b.status, date: b.date, hour: b.hour, created: b.r[C.created], category: b.r[C.cat], itemName: b.r[C.item],
     name: b.r[C.name], phone: b.phone, gender: b.r[C.gender], age: b.r[C.age], area: b.r[C.area], pain: b.r[C.pain],
     med: b.r[C.med], medDetail: b.r[C.medDetail], route: b.r[C.route], memo: b.r[C.memo], note: b.r[C.note] || '', memberId: b.memberId,
-    region: b.r[C.region] || '', school: b.r[C.school] || '', cal: !!String(b.r[C.cal] || '').trim()
+    region: b.r[C.region] || '', school: b.r[C.school] || '', cal: !!String(b.r[C.cal] || '').trim(), calMemo: b.r[C.calMemo] || ''
   }));
 }
 function addNote_(s, row, text) {
