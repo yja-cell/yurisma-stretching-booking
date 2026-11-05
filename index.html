@@ -149,6 +149,13 @@
 .anim-up{animation:fadeUp .32s cubic-bezier(.2,.8,.2,1) both}
 .result .ic{animation:popIn .5s cubic-bezier(.2,.8,.2,1) both}
 #bookView,#memberView,#resultView{overflow-x:clip}
+@keyframes pick{0%{transform:scale(.72)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+.cal button.day.on{animation:pick .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes slotIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.slots.stag button{animation:slotIn .24s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 16ms)}
+.slots button.on{animation:pick .26s cubic-bezier(.2,.8,.2,1)}
+#barInfo{display:block}
+.qb.qhide{display:none}
 /* 처음 방문·신규 ↔ 기존 회원 예약 이동 (지원 브라우저: 크롬·사파리 최신) */
 @view-transition{navigation:auto}
 ::view-transition-old(root){animation:vtOut .18s ease-in both}
@@ -753,8 +760,8 @@ async function loadAvailability(){
 }
 $('#prevM').onclick = () => { st.view.setMonth(st.view.getMonth()-1); renderCal(); };
 $('#nextM').onclick = () => { st.view.setMonth(st.view.getMonth()+1); renderCal(); };
-$('#cal').addEventListener('click', e => { const s=e.target.dataset.d; if(!s) return; st.date=s; st.hour=null; renderCal(); renderSlots(); updateBar(); });
-$('#slots').addEventListener('click', e => { const h=e.target.dataset.h; if(h===undefined) return; st.hour=Number(h); renderSlots(); updateBar(); });
+$('#cal').addEventListener('click', e => { const s=e.target.dataset.d; if(!s) return; const changed = s!==st.date; st.date=s; st.hour=null; renderCal(); renderSlots(); if (changed) { staggerIn($('#slots')); animIn($('#slotLabel'), 'anim-up'); } updateBar(); });
+$('#slots').addEventListener('click', e => { const h=e.target.dataset.h; if(h===undefined) return; st.hour=Number(h); $('#slots').classList.remove('stag'); renderSlots(); updateBar(); });
 
 /* ---------- STEP 3 ---------- */
 const form = $('#qForm');
@@ -797,6 +804,38 @@ function formMissing(){
 }
 const fmtPhone = p => p.replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3');
 function isKids(){ return st.cat === 'kids'; }
+/* 사전 질문을 하나씩: 답하면 다음 질문이 아래에 떠오른다 (한 번 나온 질문은 다시 숨기지 않음) */
+const Q_KEYS = ['name','phone','region','school','gender','age','area','pain','med','route','memo','agree'];
+const qBlocks = (() => {   // label.f(또는 학교 상자)를 기준으로 질문 묶음을 만든다
+  const groups = []; let cur = null;
+  [...form.children].forEach(el => { if (el.matches('label.f') || el.id==='schoolBox') { cur = document.createElement('div'); cur.className = 'qb'; groups.push(cur); el.before(cur); } if (cur) cur.appendChild(el); });
+  groups.forEach((g, i) => g.dataset.q = Q_KEYS[i] || ('q' + i));
+  return groups;
+})();
+const qCommitted = {}, qText = { name:1, region:1, school:1 }; let qShown = 0, qTimer = 0;
+function qDone(k){ const d = formData();
+  if (qText[k]) return k==='school' && !isKids() ? true : !!(qCommitted[k] && d[k]);
+  const m = { phone: /^01[016789][0-9]{7,8}$/.test(d.phone), gender: !!d.gender, age: !!d.age, area: d.area.length>0, med: d.med.length>0, route: !!d.route };
+  return k in m ? m[k] : true; }
+function qRefresh(focusNext){
+  let upto = qBlocks.findIndex(g => !qDone(g.dataset.q)); if (upto < 0) upto = qBlocks.length - 1;
+  const before = qShown; qShown = Math.max(qShown, upto + 1);
+  qBlocks.forEach((g, i) => g.classList.toggle('qhide', i >= qShown));
+  const fresh = qBlocks.slice(before, qShown).filter(g => !(g.dataset.q==='school' && !isKids()));
+  if (!before || !fresh.length) return;
+  fresh.forEach((g, i) => { g.style.animationDelay = (i * 60) + 'ms'; animIn(g, 'anim-up'); });
+  const first = fresh[0], r = first.getBoundingClientRect();
+  if (r.bottom > innerHeight - 110) window.scrollBy({ top: r.bottom - innerHeight + 140, behavior: 'smooth' });
+  if (focusNext) { const inp = first.querySelector('input[type=text],input[type=tel]'); if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 60); }
+}
+function qInit(){ ['name','region','school'].forEach(k => { if ((form.elements[k] && form.elements[k].value || '').trim()) qCommitted[k] = true; }); qRefresh(false); }
+form.addEventListener('input', e => { const k = e.target.name;
+  if (qText[k]) { clearTimeout(qTimer); qTimer = setTimeout(() => { if (e.target.value.trim()) { qCommitted[k] = true; qRefresh(false); } }, 1100); }
+  else if (k==='phone') qRefresh(/^01[016789][0-9]{7,8}$/.test(e.target.value.replace(/\D/g,'')));
+});
+form.addEventListener('change', e => { const k = e.target.name; if (qText[k] && e.target.value.trim()) qCommitted[k] = true; qRefresh(false); });
+form.addEventListener('keydown', e => { const k = e.target.name; if (e.key !== 'Enter' || !(qText[k] || k==='phone')) return; e.preventDefault(); if (qText[k] && e.target.value.trim()) qCommitted[k] = true; clearTimeout(qTimer); qRefresh(true); });
+form.querySelectorAll('input[type=text],input[type=tel]').forEach(i => i.setAttribute('enterkeyhint', 'next'));
 function syncKidsForm(){   // 키즈: 아이 이름 + 보호자 연락처 + 학교
   const k = isKids();
   $('#lblName').innerHTML = (k ? '아이 이름' : '이름') + '<span class="req">*</span>';
@@ -952,20 +991,14 @@ function updateBar(){
   if (st.step===3){ const m=formMissing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
   if (st.step===5 && contractUI){ const m=contractUI.missing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
   $('#barInfo').innerHTML = info;
-  const priceMode = i && info === `${i.name}<b>${won(i.price)}</b>`;
-  if (priceMode && barShown !== i.id) countUp($('#barInfo b'), i.price);
-  if (priceMode) barShown = i.id;
+  if (st.step===2 && barShown !== null && barShown !== info) animIn($('#barInfo'), 'anim-up');
+  barShown = info;
   $('#nextBtn').textContent = st.sending ? '신청 중…' : st.step===4 ? (isPkgItem() ? '서명하고 예약하기' : '예약하기') : '다음';
   $('#nextBtn').disabled = !canNext();
 }
-// 하단 금액: 이용권을 고르면 0원에서 금액까지 숫자가 올라간다 (0.5초, requestAnimationFrame 한 줄 갱신이라 가벼움)
-let barShown = null, countRaf = 0;
-function countUp(el, to){
-  if (!el) return; cancelAnimationFrame(countRaf); const t0 = performance.now(), dur = 500;
-  const tick = now => { const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3), v = p < 1 ? Math.round(to * e / 1000) * 1000 : to;
-    if (el.isConnected) el.textContent = won(v); if (p < 1) countRaf = requestAnimationFrame(tick); };
-  el.textContent = won(0); countRaf = requestAnimationFrame(tick);
-}
+let barShown = null;
+// 시간 버튼이 차례로 떠오르게 (날짜를 고를 때만)
+function staggerIn(el){ if (!el) return; [...el.children].forEach((c, i) => c.style.setProperty('--i', i)); el.classList.remove('stag'); void el.offsetWidth; el.classList.add('stag'); }
 function animIn(el, cls){ if (!el) return; el.classList.remove('anim-r','anim-l','anim-up'); void el.offsetWidth; el.classList.add(cls); }
 function go(step){
   const prevIdx = st.step ? flow().indexOf(st.step) : -1;
@@ -978,7 +1011,7 @@ function go(step){
   $('#topTitle').textContent = STEP_TITLE[step];
   if (step===2) loadAvailability();
   if (step===5) ensureContract();
-  if (step===3) syncKidsForm();
+  if (step===3) { syncKidsForm(); qInit(); }
   if (step===4) renderSummary();
   updateBar(); window.scrollTo(0, step===1?0:$('#stepbar').offsetTop-56);
 }
@@ -1419,8 +1452,8 @@ function showMember(){
   };
   $('#mPrev').onclick = () => { ms.view.setMonth(ms.view.getMonth()-1); renderCal(); };
   $('#mNext').onclick = () => { ms.view.setMonth(ms.view.getMonth()+1); renderCal(); };
-  $('#mCal').onclick = e => { const s=e.target.dataset.d; if(!s) return; ms.date=s; ms.hour=null; renderCal(); renderSlots(); };
-  $('#mSlots').onclick = e => { const h=e.target.dataset.h; if(h===undefined) return; ms.hour=Number(h); renderSlots(); };
+  $('#mCal').onclick = e => { const s=e.target.dataset.d; if(!s) return; const changed = s!==ms.date; ms.date=s; ms.hour=null; renderCal(); renderSlots(); if (changed) { staggerIn($('#mSlots')); animIn($('#mSlotLabel'), 'anim-up'); } };
+  $('#mSlots').onclick = e => { const h=e.target.dataset.h; if(h===undefined) return; ms.hour=Number(h); $('#mSlots').classList.remove('stag'); renderSlots(); };
   $('#mLoginBtn').onclick = async () => {
     const c = { name:$('#mName').value.trim(), phone:$('#mPhone').value.replace(/\D/g,'') };
     if (!c.name || !/^01\d{8,9}$/.test(c.phone)) return msg('#mLoginMsg', '이름과 연락처를 모두 입력해 주세요.');
