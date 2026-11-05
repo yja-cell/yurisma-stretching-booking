@@ -206,7 +206,7 @@ function autoMember_(d, phone, pr, pkg, conId, region, school, bookingId) {
   passAppend_(m.id, pass);
   syncMemberPasses_(m.id);
   if (conId) s.getRange(m.row, M.contract + 1).setValue(conId);
-  if (region) s.getRange(m.row, M.region + 1, 1, 2).setValues([[safe_(region), safe_(school || m.school)]]);
+  if (region && !diff) s.getRange(m.row, M.region + 1, 1, 2).setValues([[safe_(region), safe_(school || m.school)]]);   // 이름이 다른 가족 예약이면 회원 거주지·학교는 그대로
   return { id: m.id, isNew: false, note: '기존 회원에 회원권 추가(' + pr.name + ')' + (diff ? ' / ' + diff : '') };
 }
 
@@ -571,7 +571,9 @@ function calTitle_(b, rows, members, passes) {
   const r = b.r, m = b.memberId ? members.find(x => x.id === b.memberId) : null;
   let price = Number(digits_(r[C.price])) || 0, count = '';
   const paid = calShow_(b);
-  const where = [String(r[C.region] || (m && m.region) || '').trim(), String(r[C.school] || (m && m.school) || '').trim()].filter(String).join(', ');
+  // 거주지·학교는 그 예약에 적힌 값. (회원 예약 화면·관리자 예약은 비어 있을 때만 회원 정보로 채움 → 같은 번호 가족의 학교가 섞이지 않게)
+  const fromMem = m && String(r[C.cat]) === '회원';
+  const where = [String(r[C.region] || (fromMem && m.region) || '').trim(), String(r[C.school] || (fromMem && m.school) || '').trim()].filter(String).join(', ');
   if (m) {   // 회원 예약: 이 예약이 속한 회원권의 결제 금액, 회차는 2회 이상 회원권만 (예: 10/3)
     const mine = rows.filter(x => x.memberId === m.id && x.active && x.status !== '신청').sort((a, c) => (a.date + hm_(a.hour)).localeCompare(c.date + hm_(c.hour)));
     const idx = mine.findIndex(x => x.id === b.id), hit = idx >= 0 ? passAt_(passesFor_(m, passes || []), m.prev + idx + 1) : null;
@@ -608,8 +610,8 @@ function calSyncCore_(id, ctx) {
   }
   const start = new Date(b.date + 'T' + hm_(b.hour) + ':00+09:00'), end = new Date(start.getTime() + SLOT_MIN * 60000);
   const title = calTitle_(b, ctx.rows, ctx.members, ctx.passes);
-  // 설명 맨 위: 요청(회원 예약의 요청사항) → 메모(관리자) → 빈 줄 → 나머지. 신규 신청의 요청사항은 건강 정보가 섞일 수 있어 넣지 않는다.
-  const req = String(b.r[C.cat]) === '회원' ? String(b.r[C.memo] || '').trim() : '';   // 회원 예약 화면에서 적은 요청만
+  // 설명 맨 위: 요청(손님 요청사항) → 메모(관리자) → 빈 줄 → 나머지. (공유 캘린더라 건강 정보가 섞일 수 있음을 관리자가 알고 씀)
+  const req = String(b.r[C.memo] || '').trim();   // 손님이 적은 요청사항(신규·회원 모두)
   const memo = String(b.r[C.calMemo] || '').trim();
   const head = (req ? '요청: ' + req + '\n' : '') + (memo ? '메모: ' + memo + '\n' : '');
   const desc = (head ? head + '\n' : '') + '예약번호 ' + b.id + '\n이용권 ' + (b.r[C.item] || '') + ' · 상태 ' + b.status + '\n유리스마 스트레칭 예약 페이지에서 자동 등록';

@@ -982,7 +982,7 @@ function visitGuide(date, hour, minutes){
   return `<div class="guide"><b>예약 장소와 시간 안내드립니다.</b>
     <dl><dt>일시</dt><dd>${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${WEEK[d.getDay()]}) ${koTime(hour)}${minutes ? ' · ' + minutes + '분' : ''}</dd>
       <dt>장소</dt><dd>${esc(CONFIG.visit.place)}</dd><dt>주차</dt><dd>${esc(CONFIG.visit.parking)}</dd></dl>
-    <p>원활한 진행을 위해 5분 전까지 도착해 주시면 감사하겠습니다.<br>편한 복장으로 오시고, 불편하신 부위가 있으면 미리 말씀해 주세요.<br>'일정 변경'이 필요하시면 하루 전까지 연락 부탁드립니다.</p>
+    <p>원활한 진행을 위해 5분 전까지 도착해 주시면 감사하겠습니다.<br>편한 복장으로 오시고, 불편하신 부위가 있으면 미리 말씀해 주세요.<br>'일정 변경'이 필요하시면 예약 24시간 전까지 연락 부탁드립니다.</p>
     <p>궁금하신 점은 <a href="tel:${tel.replace(/\D/g,'')}">${esc(tel)}</a>로 연락 주세요.</p></div>`;
 }
 function showDone(p, id, contractId, member){
