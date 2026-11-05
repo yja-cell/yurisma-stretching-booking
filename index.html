@@ -139,6 +139,12 @@
   .result.fail .ic{background:var(--red)}
   .result h2{margin:0 0 8px;font-size:24px;font-weight:900;letter-spacing:-.02em}
   .result .sum{text-align:left;margin-top:22px}
+.guide{text-align:left;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:14.5px;line-height:1.65;color:var(--ink)}
+.guide dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0}
+.guide dt{font-weight:800;color:var(--sub)}
+.guide dd{margin:0;font-weight:600;word-break:keep-all}
+.guide p{margin:8px 0 0}
+.guide a{color:var(--blue-d);font-weight:800}
   .result a{display:inline-block;margin-top:20px;color:var(--blue);font-weight:800;text-decoration:none}
   /* admin */
   .admin{padding:20px}
@@ -425,6 +431,7 @@ select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-r
     <section class="sec hide" id="mHome">
       <div class="mcard"><div><div class="who" id="mWho"></div><div class="sub" id="mItem"></div><div class="sub" id="mExp"></div></div>
         <div class="big" id="mRemain"></div></div>
+      <div id="mGuide"></div>
       <h2 style="margin-top:24px">예정된 예약</h2>
       <div id="mUpcoming"></div>
       <div class="note">예약 변경·취소는 이솔 원장님께 연락해 주세요.</div>
@@ -562,6 +569,8 @@ const CONFIG = {
   // 예약 오픈: 이번 달 말까지만 열고, 매달 openDay일 openAtHour시(한국 시간)에 다음 달을 엽니다. (시트 스크립트와 같게)
   openDay: 10, openAtHour: 12,
   trainer: { name:'이솔', phone:'010-3175-7357' },
+  // 예약 완료 화면의 방문 안내 (장소·주차)
+  visit: { place:'서울 강남구 삼성로 748 5층 와이웩슬러멘토링센터 C room', parking:'발렛 이용 시 2시간 4,000원' },
   // 당일 예약은 받지 않음 (내일부터 예약 가능). 아래 문구가 이용권·날짜 화면에 표시됩니다.
   sameDayNotice: '당일 예약은 온라인으로 받지 않아요. 당일 예약은 이솔 원장님께 따로 연락주시기 바랍니다.',
   payNote: '예약은 바로 확정돼요. 결제는 코치가 사전 질문을 확인한 뒤 기존 결제 방법으로 안내드립니다.',
@@ -966,20 +975,29 @@ async function submit(){
   alert('예약 신청 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.' + (res.message?`\n(${res.message})`:''));
   updateBar();
 }
+// 방문 안내: 예약 완료(신규)·회원 예약 완료에 같이 쓴다
+function koTime(h){ const hh = Math.floor(h), mm = Math.round((h - hh) * 60); return `${hh < 12 ? '오전' : '오후'} ${hh % 12 || 12}시${mm ? ' ' + mm + '분' : ''}`; }
+function visitGuide(date, hour, minutes){
+  const d = new Date(date + 'T00:00:00'), tel = CONFIG.trainer.phone;
+  return `<div class="guide"><b>예약 장소와 시간 안내드립니다.</b>
+    <dl><dt>일시</dt><dd>${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${WEEK[d.getDay()]}) ${koTime(hour)}${minutes ? ' · ' + minutes + '분' : ''}</dd>
+      <dt>장소</dt><dd>${esc(CONFIG.visit.place)}</dd><dt>주차</dt><dd>${esc(CONFIG.visit.parking)}</dd></dl>
+    <p>원활한 진행을 위해 5분 전까지 도착해 주시면 감사하겠습니다.<br>편한 복장으로 오시고, 불편하신 부위가 있으면 미리 말씀해 주세요.<br>'일정 변경'이 필요하시면 하루 전까지 연락 부탁드립니다.</p>
+    <p>궁금하신 점은 <a href="tel:${tel.replace(/\D/g,'')}">${esc(tel)}</a>로 연락 주세요.</p></div>`;
+}
 function showDone(p, id, contractId, member){
   $('#bookView').classList.add('hide'); $('#bar').classList.add('hide'); $('#backBtn').classList.add('hide'); $('#foot').classList.add('hide');
   $('#topTitle').textContent='예약 완료';
   const dt=new Date(p.date+'T00:00:00');
   const v=$('#resultView'); v.classList.remove('hide');
   v.innerHTML = `<div class="result"><div class="ic">✓</div><h2>예약이 확정됐어요</h2>
-    <div style="color:var(--sub)">${esc(CONFIG.payNote)}</div>
+    ${visitGuide(p.date, p.hour, p.minutes)}
     <div class="sum">
       <div class="row"><span>예약번호</span><span>${esc(id)}</span></div>
       <div class="row"><span>이용권</span><span>${esc(p.category)} · ${esc(p.itemName)}</span></div>
-      <div class="row"><span>일시</span><span>${dt.getMonth()+1}월 ${dt.getDate()}일 (${WEEK[dt.getDay()]}) ${p.time} · ${p.minutes}분</span></div>
       <div class="row"><span>예약자</span><span>${esc(p.name)} · ${fmtPhone(p.phone)}</span></div>
       <div class="row total"><span>이용 금액</span><span>${won(p.price)}</span></div>
-    </div>${member ? `<div class="pay-note" style="text-align:left">${member.isNew ? '회원으로 등록됐어요.' : '회원 정보에 이용권을 더했어요.'} ${esc(member.item)} · 남은 횟수 ${Math.max(0, member.remaining)}회<br>다음 예약은 [기존 회원 예약]에서 이름·연락처로 바로 할 수 있어요.</div><button class="btn-main" id="goMember">회원 예약 화면으로 가기</button>` : ''}${contractId ? `<div class="pay-note" style="text-align:left">약정서가 접수됐어요 (약정번호 ${esc(contractId)}). 아래 버튼으로 PDF로 저장해 보관하세요.</div><button class="btn-main" id="savePdf">약정서 PDF로 저장</button>` : ''}<a href="${location.pathname}">처음으로</a></div>`;
+    </div><div class="pay-note" style="text-align:left">${esc(CONFIG.payNote.replace(/^예약은 바로 확정돼요\.\s*/, ''))}</div>${member ? `<div class="pay-note" style="text-align:left">${member.isNew ? '회원으로 등록됐어요.' : '회원 정보에 이용권을 더했어요.'} ${esc(member.item)} · 남은 횟수 ${Math.max(0, member.remaining)}회<br>다음 예약은 [기존 회원 예약]에서 이름·연락처로 바로 할 수 있어요.</div><button class="btn-main" id="goMember">회원 예약 화면으로 가기</button>` : ''}${contractId ? `<div class="pay-note" style="text-align:left">약정서가 접수됐어요 (약정번호 ${esc(contractId)}). 아래 버튼으로 PDF로 저장해 보관하세요.</div><button class="btn-main" id="savePdf">약정서 PDF로 저장</button>` : ''}<a href="${location.pathname}">처음으로</a></div>`;
   if (contractId) $('#savePdf').onclick = () => printContract(lastContract, contractId);
   if (member) $('#goMember').onclick = () => { sessionStorage.setItem('yu_member_prefill', JSON.stringify({ name:p.name, phone:p.phone })); location.href = location.pathname + '?member'; };
   window.scrollTo(0,0);
@@ -1391,10 +1409,13 @@ function showMember(){
     const r = await Store.member('memberBook', { ...cred, date:ms.date, hour:ms.hour, memo:$('#mMemo').value.trim() }).catch(() => ({ ok:false, error:'network' }));
     if (!r.ok){ msg('#mBookMsg', mErr(r.error)); if (r.error==='auth'){ $('#mLogout').click(); return; }
       await Store.refresh().catch(()=>{}); ms.hour=null; renderCal(); renderSlots(); return; }
-    const done = `${ms.date} ${hm(ms.hour)}`; mem = r.member; ms.date=null; ms.hour=null; $('#mMemo').value='';
+    const done = `${ms.date} ${hm(ms.hour)}`, bd = ms.date, bh = ms.hour; mem = r.member; ms.date=null; ms.hour=null; $('#mMemo').value='';
     await Store.refresh().catch(()=>{}); renderHome(); msg('#mBookMsg', `${done} 예약이 확정됐어요. 남은 횟수 ${mem.remaining}회`, true);
+    const mins = (CONFIG.categories.find(c => /키즈|학생/.test(mem.item||'') ? c.id==='kids' : c.id==='adult') || {}).minutes;
+    $('#mGuide').innerHTML = `<div class="pay-note" style="margin-top:16px">✓ 예약이 확정됐어요. 남은 횟수 ${Math.max(0, mem.remaining)}회</div>` + visitGuide(bd, bh, mins);
+    $('#mGuide').scrollIntoView({ behavior:'smooth', block:'start' });
   };
-  $('#mLogout').onclick = () => { cred=null; mem=null; ms.date=null; ms.hour=null; $('#mHome').classList.add('hide'); $('#mLogin').classList.remove('hide'); };
+  $('#mLogout').onclick = () => { $('#mGuide').innerHTML=''; cred=null; mem=null; ms.date=null; ms.hour=null; $('#mHome').classList.add('hide'); $('#mLogin').classList.remove('hide'); };
 }
 
 /* ---------- 시작 ---------- */
