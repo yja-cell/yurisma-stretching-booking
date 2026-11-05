@@ -22,7 +22,7 @@
   header.top .in{display:flex;align-items:center;gap:10px;padding:12px 20px}
   header.top img{height:34px;display:block}
   header.top .ttl{flex:1;font-weight:700;font-size:15px;text-align:right;color:var(--sub)}
-  header.top .back{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:2px 6px 2px 0;color:var(--ink)}
+  header.top .back{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:9px 12px 9px 0;min-width:40px;min-height:40px;color:var(--ink)}
   .hero{text-align:center;padding:34px 20px 22px}
   .hero h1{margin:0;font-size:38px;font-weight:900;letter-spacing:-.03em;line-height:1.15}
   .hero p{margin:12px 0 0;color:#3f3a35;font-size:15.5px}
@@ -80,10 +80,10 @@
   .cal .w{font-size:12.5px;color:var(--sub);padding:4px 0 6px}
   .cal .w.sun{color:var(--red)} .cal .w.sat{color:var(--blue)}
   .cal button.day{width:40px;height:40px;margin:1px auto;border:0;border-radius:50%;background:none;font-size:14.5px;cursor:pointer;color:var(--ink);font-weight:500}
-  .cal button.day:hover:not(:disabled){background:var(--soft)}
+  @media (hover:hover){.cal button.day:hover:not(:disabled){background:var(--soft)}}
   .cal button.day:disabled{color:#cfd3d8;cursor:default}
   .cal button.day.today{font-weight:800;box-shadow:0 0 0 1px var(--line) inset}
-  .cal button.day.on{background:var(--blue);color:#fff;font-weight:800}
+  .cal button.day.on,.cal button.day.on:hover:not(:disabled){background:var(--blue);color:#fff;font-weight:800}
   .slot-label{font-size:14px;font-weight:700;margin:20px 0 10px}
   .slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .slots button{padding:11px 0;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font-weight:700;font-size:14px;color:var(--ink)}
@@ -213,14 +213,15 @@
   .doc .chk small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
   .doc .req{color:var(--red);font-weight:800} .doc .opt{color:var(--blue-d);font-weight:800}
   .sigbox{border:1.5px dashed #b9c3cf;border-radius:12px;background:#fff;position:relative;touch-action:none}
-  .sigbox canvas{display:block;width:100%;height:150px;cursor:crosshair}
+  .sigbox canvas{display:block;width:100%;height:150px;cursor:crosshair;touch-action:none}
+.meta a[href^="tel:"]{color:var(--blue-d)}
   .sigbox .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c0c6cd;font-size:14px;pointer-events:none}
   .doc .legal{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.6}
   .prodpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #printArea{display:none}
   @media print{ html,body{background:#fff!important} .wrap{min-height:0!important;padding:0!important} body *{visibility:hidden!important} #printArea,#printArea *{visibility:visible!important} #printArea{display:block!important;position:absolute;left:0;top:0;width:100%;padding:0}
     #printArea .doc{border:0;padding:0} #printArea .terms{max-height:none;overflow:visible;border:0;padding:0} .bar{display:none!important} }
-  @media (max-width:420px){ .hero h1{font-size:31px} .slots{grid-template-columns:repeat(3,1fr)} .cal button.day{width:36px;height:36px} }
+  @media (max-width:420px){ input[type=text],input[type=tel],input[type=number],input[type=date],input[type=password],select,textarea{font-size:16px!important} .hero h1{font-size:31px} .slots{grid-template-columns:repeat(3,1fr)} .cal button.day{width:36px;height:36px} }
 </style>
 </head>
 <body>

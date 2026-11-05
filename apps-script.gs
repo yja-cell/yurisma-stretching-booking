@@ -453,8 +453,11 @@ function calSyncCore_(id, ctx) {
   }
   const start = new Date(b.date + 'T' + hm_(b.hour) + ':00+09:00'), end = new Date(start.getTime() + SLOT_MIN * 60000);
   const title = calTitle_(b, ctx.rows, ctx.members);
-  const memo = String(b.r[C.calMemo] || '').trim();   // 관리자 메모는 설명 맨 위에
-  const desc = (memo ? memo + '\n\n' : '') + '예약번호 ' + b.id + '\n이용권 ' + (b.r[C.item] || '') + ' · 상태 ' + b.status + '\n유리스마 스트레칭 예약 페이지에서 자동 등록';
+  // 설명 맨 위: 요청(회원 예약의 요청사항) → 메모(관리자) → 빈 줄 → 나머지. 신규 신청의 요청사항은 건강 정보가 섞일 수 있어 넣지 않는다.
+  const req = b.r[C.member] ? String(b.r[C.memo] || '').trim() : '';
+  const memo = String(b.r[C.calMemo] || '').trim();
+  const head = (req ? '요청: ' + req + '\n' : '') + (memo ? '메모: ' + memo + '\n' : '');
+  const desc = (head ? head + '\n' : '') + '예약번호 ' + b.id + '\n이용권 ' + (b.r[C.item] || '') + ' · 상태 ' + b.status + '\n유리스마 스트레칭 예약 페이지에서 자동 등록';
   let ev = found[0] || null;
   found.slice(1).forEach(e => { try { e.deleteEvent(); } catch (er) {} });   // 중복 일정 정리
   if (ev) { if (ev.getTitle() !== title) ev.setTitle(title); if (ev.getStartTime().getTime() !== start.getTime()) ev.setTime(start, end); if (ev.getDescription() !== desc) ev.setDescription(desc); }
