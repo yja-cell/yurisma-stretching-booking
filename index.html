@@ -426,7 +426,7 @@ select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-r
        <button class="btn-main" id="mLoginBtn">남은 횟수 확인하기</button>
         <div class="msg" id="mLoginMsg"></div>
       </div>
-      <div class="note">등록된 회원 정보가 확인되지 않으면 이솔 원장님께 문의해 주세요.</div>
+      <div class="note">학생·키즈 회원은 <b>자녀 이름 + 보호자 연락처</b>로 확인해요. 등록된 회원 정보가 확인되지 않으면 이솔 원장님께 문의해 주세요.</div>
     </section>
     <section class="sec hide" id="mHome">
       <div class="mcard"><div><div class="who" id="mWho"></div><div class="sub" id="mItem"></div><div class="sub" id="mExp"></div></div>
@@ -1055,7 +1055,7 @@ async function showAdmin(){
   };
   const errText = e => ({ auth:'비밀번호가 맞지 않거나 아직 입력하지 않았어요.', locked:'비밀번호를 여러 번 틀려 15분 동안 잠겼어요. [내 이메일로 받기]를 누르면 잠금도 풀려요.', taken:'그 시간에는 다른 예약이 있어요.',
     notfound:'대상을 찾지 못했어요. 새로고침해 주세요.', cancelled:'취소된 예약은 변경할 수 없어요.', invalid:'입력값이 올바르지 않아요.',
-    dupPhone:'같은 연락처로 등록된 회원이 이미 있어요.', noContract:'10회권·20회권 회원은 약정서가 있어야 등록돼요. 회원에게 약정서 작성 페이지를 보내 같은 연락처로 서명받거나, 종이 약정서를 받았으면 체크해 주세요.', noRemain:'남은 횟수가 없어요. 총 횟수를 늘린 뒤 예약해 주세요.', preview:'미리보기 모드에서는 쓸 수 없어요.' }[e] || ('오류: ' + e));
+    dupPhone:'같은 연락처·같은 이름의 회원이 이미 있어요. (같은 번호라도 이름이 다르면 가족 회원으로 따로 등록돼요)', noContract:'10회권·20회권 회원은 약정서가 있어야 등록돼요. 회원에게 약정서 작성 페이지를 보내 같은 연락처로 서명받거나, 종이 약정서를 받았으면 체크해 주세요.', noRemain:'남은 횟수가 없어요. 총 횟수를 늘린 뒤 예약해 주세요.', preview:'미리보기 모드에서는 쓸 수 없어요.' }[e] || ('오류: ' + e));
   let rowsCache = [], editing = null;
   const drawBookings = async () => {
     $('#bookStatus').textContent = '';

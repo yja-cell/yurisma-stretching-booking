@@ -189,26 +189,25 @@ function book_(d) {
 }
 
 // 신규 신청 → 회원 자동 등록. 같은 연락처의 같은 이름 회원이 있으면 새 이용권 횟수를 더한다.
-// 같은 연락처에 다른 이름 회원이 있으면(형제가 보호자 번호를 같이 쓰는 경우 등) 연결하지 않고 관리 기록에 남긴다. (잠금 안에서 호출)
-// 연락처가 같은 회원이 있으면 회원을 새로 만들지 않고 회원권만 추가한다(이름이 달라도 같은 번호면 같은 회원). (잠금 안에서 호출)
+// 같은 사람 = 연락처와 이름이 둘 다 같은 회원 → 회원권만 추가. 연락처만 같고 이름이 다르면(학부모·자녀, 형제) 가족 회원을 따로 만든다. (잠금 안에서 호출)
 function autoMember_(d, phone, pr, pkg, conId, region, school, bookingId) {
   const s = sheet_('회원', MEM_H), name = String(d.name || '').trim(), count = pkg ? pkg.count : 1;
-  const m = members_().find(x => x.phone === phone);
-  const diff = m && normName_(m.name) !== normName_(name) ? '예약 이름 ' + name + '(회원 이름과 다름)' : '';
-  const pass = { item: pr.name, count: count, amount: pr.price, kind: '신규 예약', booking: bookingId, contract: conId, memo: diff };
+  const m = findMember_(phone, name), family = !m && members_().some(x => x.phone === phone);
+  const pass = { item: pr.name, count: count, amount: pr.price, kind: '신규 예약', booking: bookingId, contract: conId, memo: '' };
   if (!m) {
     const id = newId_('M');
-    s.appendRow([id, safe_(name), "'" + phone, pr.name, count, 0, 0, count, '', '활성', '', today_(), conId, safe_(region), safe_(school)]);
+    s.appendRow([id, safe_(name), "'" + phone, pr.name, count, 0, 0, count, '', '활성', family ? '같은 번호 가족 회원' : '', today_(), conId, safe_(region), safe_(school)]);
     passAppend_(id, pass);
-    return { id: id, isNew: true, note: '회원 자동 등록' };
+    return { id: id, isNew: true, note: family ? '회원 자동 등록(같은 번호 가족 회원)' : '회원 자동 등록' };
   }
   migratePasses_(m.id);
   passAppend_(m.id, pass);
   syncMemberPasses_(m.id);
   if (conId) s.getRange(m.row, M.contract + 1).setValue(conId);
-  if (region && !diff) s.getRange(m.row, M.region + 1, 1, 2).setValues([[safe_(region), safe_(school || m.school)]]);   // 이름이 다른 가족 예약이면 회원 거주지·학교는 그대로
-  return { id: m.id, isNew: false, note: '기존 회원에 회원권 추가(' + pr.name + ')' + (diff ? ' / ' + diff : '') };
+  if (region) s.getRange(m.row, M.region + 1, 1, 2).setValues([[safe_(region), safe_(school || m.school)]]);
+  return { id: m.id, isNew: false, note: '기존 회원에 회원권 추가(' + pr.name + ')' };
 }
+function findMember_(phone, name) { const n = normName_(name); return members_().find(x => x.phone === phone && normName_(x.name) === n) || null; }
 
 /* ---------- 회원권 ---------- */
 function passes_() {
@@ -268,7 +267,7 @@ function passAddAdmin_(d) {
     let con = d.paperContract ? '종이' : '';
     if (packageOf_(item) && !con) {   // 10·20회권은 아직 회원권에 연결 안 된 온라인 약정서가 있어야 한다
       const usedC = {}; passes_().forEach(p => usedC[p.contract] = 1);
-      const free = contractsByPhone_(m.phone).filter(c => !usedC[c.id]).pop();
+      const free = contractsByPhone_(m.phone).filter(c => !usedC[c.id] && normName_(c.name) === normName_(m.name)).pop();
       if (!free) return { ok: false, error: 'noContract' };
       con = free.id;
     }
@@ -357,7 +356,7 @@ function contractOnly_(d) {
 }
 function contractsByPhone_(phone) {
   const v = sheet_('약정서', CON_H).getDataRange().getDisplayValues(), out = [];
-  for (let i = 1; i < v.length; i++) if (digits_(v[i][4]) === phone && String(v[i][2]).trim() !== '취소') out.push({ id: v[i][0], at: v[i][1], product: v[i][7] });
+  for (let i = 1; i < v.length; i++) if (digits_(v[i][4]) === phone && String(v[i][2]).trim() !== '취소') out.push({ id: v[i][0], at: v[i][1], product: v[i][7], name: String(v[i][3] || '') });
   return out;
 }
 function contractHtml_(c, id) {
@@ -404,8 +403,8 @@ const CONTRACT_TERMS_HTML = '<h2>1. 수업 진행과 사용 기간</h2><div>1) �
 function memberAuth_(d) {
   const phone = digits_(d.phone), name = normName_(d.name);
   if (!/^01[016789]\d{7,8}$/.test(phone) || !name) return { ok: false, error: 'auth' };
-  const m = members_().find(x => x.phone === phone);
-  if (m && m.status !== '정지' && normName_(m.name) === name) return { ok: true, m: m };
+  const m = members_().find(x => x.phone === phone && normName_(x.name) === name);   // 같은 번호의 가족은 이름으로 구분
+  if (m && m.status !== '정지') return { ok: true, m: m };
   return { ok: false, error: 'auth' };
 }
 
@@ -439,18 +438,18 @@ function memberSave_(x) {
   const expires = x.expires ? dateStr_(x.expires) : '';
   const res = withLock_(() => {
     const s = sheet_('회원', MEM_H), all = members_();
-    if (all.some(m => m.phone === phone && m.id !== x.id)) return { ok: false, error: 'dupPhone' };
+    if (all.some(m => m.phone === phone && normName_(m.name) === normName_(name) && m.id !== x.id)) return { ok: false, error: 'dupPhone' };   // 같은 번호·같은 이름만 중복
     let m = x.id ? all.find(r => r.id === x.id) : null;
     if (x.id && !m) return { ok: false, error: 'notfound' };
     // 10회권·20회권 회원은 약정서(온라인 서명 또는 종이)가 있어야 등록
-    const online = contractsByPhone_(phone);
+    const online = contractsByPhone_(phone).filter(c => normName_(c.name) === normName_(name));   // 같은 번호 가족의 약정서와 섞이지 않게
     let conTag = (m && m.contract) || (online.length ? online[online.length - 1].id : '') || (x.paperContract ? '종이' : '');
     if (packageOf_(x.item) && !conTag) return { ok: false, error: 'noContract' };
     const vals = { name: safe_(name), phone: "'" + phone, item: safe_(x.item || ''), total: total, prev: prev,
       expires: expires ? "'" + expires : '', status: x.status === '정지' ? '정지' : '활성', memo: safe_(x.memo || ''),
       region: safe_(String(x.region || '').trim().slice(0, 40)), school: safe_(String(x.school || '').trim().slice(0, 40)) };
     if (!vals.region || !vals.school) {   // 비어 있으면 같은 연락처의 최근 신규 예약에서 가져온다
-      const last = bookingRows_().filter(r => r.phone === phone && !r.memberId).pop();
+      const last = bookingRows_().filter(r => r.phone === phone && normName_(r.r[C.name]) === normName_(name)).pop();
       if (last) { vals.region = vals.region || safe_(last.r[C.region] || ''); vals.school = vals.school || safe_(last.r[C.school] || ''); }
     }
     let id;
