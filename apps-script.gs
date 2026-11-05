@@ -153,19 +153,44 @@ function book_(d) {
     if (Number(cache.get(hourKey) || 0) >= MAX_BOOKINGS_PER_HOUR) return { ok: false, error: 'busy' };
     const rows = bookingRows_();
     if (isCoachBlocked_(d.date, hour) || slotTaken_(rows, d.date, hour)) return { ok: false, error: 'taken' };
-    if (rows.filter(r => r.active && !r.memberId && r.phone === phone && r.date >= today_()).length >= MAX_ACTIVE_PER_PHONE) return { ok: false, error: 'limit' };
+    if (rows.filter(r => r.active && String(r.r[C.cat]) !== '회원' && r.phone === phone && r.date >= today_()).length >= MAX_ACTIVE_PER_PHONE) return { ok: false, error: 'limit' };
     const id = newId_('YU');
-    appendBooking_({ id: id, status: '신청', date: d.date, hour: hour, cat: d.category, item: d.itemName, price: pr.price, name: d.name, phone: phone,
+    let conId = '';
+    if (con) { con.start = con.start || d.date; conId = saveContract_(con, id); }
+    const mem = autoMember_(d, phone, pr, pkg, conId, region, school);   // 수업을 신청하면 바로 회원으로 등록(또는 기존 회원에 횟수 추가)
+    appendBooking_({ id: id, status: '확정', date: d.date, hour: hour, cat: d.category, item: d.itemName, price: pr.price, name: d.name, phone: phone,
       gender: d.gender, age: d.age, area: [].concat(d.area || []).join(', '), pain: Number(d.pain) || 0, med: [].concat(d.med || []).join(', '),
-      medDetail: d.medDetail, route: d.route, memo: d.memo, agreed: 'Y', note: con ? '약정서 서명' : '', member: '', region: region, school: school });
+      medDetail: d.medDetail, route: d.route, memo: d.memo, agreed: 'Y', note: [con ? '약정서 서명' : '', mem.note].filter(String).join(' / '),
+      member: mem.id || '', region: region, school: school });
     cache.put(hourKey, String(Number(cache.get(hourKey) || 0) + 1), 3600);
-    const out = { ok: true, id: id };
-    if (con) { con.start = con.start || d.date; out.contractId = saveContract_(con, id); out.contract = con; }
+    const out = { ok: true, id: id, memberId: mem.id || '' };
+    if (con) { out.contractId = conId; out.contract = con; }
+    if (mem.id) {
+      recalc_(mem.id);
+      const mm = members_().find(x => x.id === mem.id), v = memberView_(mm, bookingRows_());
+      out.member = { name: mm.name, item: mm.item, total: mm.total, remaining: v.remaining, isNew: !!mem.isNew };
+    }
     return out;
   });
   if (res.ok && res.contract) { mailContract_(res.contract, res.contractId); delete res.contract; }
-  if (res.ok) calSync_(res.id);
-  return res;
+  return afterCal_(res);
+}
+
+// 신규 신청 → 회원 자동 등록. 같은 연락처의 같은 이름 회원이 있으면 새 이용권 횟수를 더한다.
+// 같은 연락처에 다른 이름 회원이 있으면(형제가 보호자 번호를 같이 쓰는 경우 등) 연결하지 않고 관리 기록에 남긴다. (잠금 안에서 호출)
+function autoMember_(d, phone, pr, pkg, conId, region, school) {
+  const s = sheet_('회원', MEM_H), name = String(d.name || '').trim(), count = pkg ? pkg.count : 1;
+  const m = members_().find(x => x.phone === phone);
+  if (m && normName_(m.name) !== normName_(name)) return { id: '', note: '회원 연결 안 됨(같은 연락처에 다른 이름 회원 ' + m.name + ')' };
+  if (!m) {
+    const id = newId_('M');
+    s.appendRow([id, safe_(name), "'" + phone, pr.name, count, 0, 0, count, '', '활성', '', today_(), conId, safe_(region), safe_(school)]);
+    return { id: id, isNew: true, note: '회원 자동 등록' };
+  }
+  s.getRange(m.row, M.item + 1, 1, 2).setValues([[pr.name, m.total + count]]);
+  if (conId) s.getRange(m.row, M.contract + 1).setValue(conId);
+  if (region) s.getRange(m.row, M.region + 1, 1, 2).setValues([[safe_(region), safe_(school || m.school)]]);
+  return { id: m.id, isNew: false, note: '기존 회원에 ' + count + '회 추가' };
 }
 
 /* ---------- 약정서 ---------- */
@@ -396,7 +421,7 @@ function smsAuto_() { return PropertiesService.getScriptProperties().getProperty
 /* ---------- 구글 캘린더 연동 ----------
  * 제목 예: <스트레칭8完>이시현(경기 안양, 귀인초등학교)010-6549-0464, 20/19
  *   8 = 결제 금액(만원, 회원은 이용권 전체 금액), 完 = 결제 완료, 20/19 = 총 20회 중 19회째(10·20회권)
- * 확정되면 일정을 만들고(항상 完), 시간 변경은 일정을 옮기고, 취소는 일정을 지운다. 신청(결제 대기)은 올리지 않는다. 실패해도 예약은 그대로 저장된다. */
+ * 확정되면 일정을 만들고(항상 完), 시간 변경은 일정을 옮기고, 취소는 일정을 지운다. 새 예약은 들어오면 바로 확정이다(예전 '신청' 줄은 올리지 않음). 실패해도 예약은 그대로 저장된다. */
 function afterCal_(res) {
   if (res && res.ok && res.id) { if (res.memberId) calSyncMember_(res.memberId, res.id); else calSync_(res.id); }
   if (res) delete res.memberId;
@@ -421,7 +446,9 @@ function calTitle_(b, rows, members) {
   let count = '';
   if (m && m.total && packageOf_(m.item)) {   // 회차는 10·20회권만
     const mine = rows.filter(x => x.memberId === m.id && x.active && x.status !== '신청').sort((a, c) => (a.date + hm_(a.hour)).localeCompare(c.date + hm_(c.hour)));
-    count = m.total + '/' + (m.prev + mine.findIndex(x => x.id === b.id) + 1);
+    // 가장 최근에 산 이용권 기준으로 셈다. 예: 웰컴 1회 들은 뒤 10회권을 사면 총 11회지만 제목은 10/1, 10/2 …
+    const pk = packageOf_(m.item), pos = m.prev + mine.findIndex(x => x.id === b.id) + 1, n = pos - Math.max(0, m.total - pk.count);
+    count = n >= 1 ? pk.count + '/' + n : m.total + '/' + pos;
   } else { const pkg = packageOf_(r[C.item]); if (pkg) count = pkg.count + '/1'; }
   return '<스트레칭' + manwon_(price) + (paid ? '完' : '') + '>' + String(r[C.name]).trim() + (where ? '(' + where + ')' : '') + fmtPhone_(b.phone)
     + (count ? ', ' + count : '') + (b.status === '노쇼' ? ' (노쇼)' : '');
@@ -454,7 +481,7 @@ function calSyncCore_(id, ctx) {
   const start = new Date(b.date + 'T' + hm_(b.hour) + ':00+09:00'), end = new Date(start.getTime() + SLOT_MIN * 60000);
   const title = calTitle_(b, ctx.rows, ctx.members);
   // 설명 맨 위: 요청(회원 예약의 요청사항) → 메모(관리자) → 빈 줄 → 나머지. 신규 신청의 요청사항은 건강 정보가 섞일 수 있어 넣지 않는다.
-  const req = b.r[C.member] ? String(b.r[C.memo] || '').trim() : '';
+  const req = String(b.r[C.cat]) === '회원' ? String(b.r[C.memo] || '').trim() : '';   // 회원 예약 화면에서 적은 요청만
   const memo = String(b.r[C.calMemo] || '').trim();
   const head = (req ? '요청: ' + req + '\n' : '') + (memo ? '메모: ' + memo + '\n' : '');
   const desc = (head ? head + '\n' : '') + '예약번호 ' + b.id + '\n이용권 ' + (b.r[C.item] || '') + ' · 상태 ' + b.status + '\n유리스마 스트레칭 예약 페이지에서 자동 등록';

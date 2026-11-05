@@ -464,7 +464,7 @@
       <div id="bookingList"></div>
       <button class="btn more hide" id="bookMore">더보기</button>
       <div class="status" id="bookStatus"></div>
-      <div class="row" style="margin-top:6px"><button class="btn-sub" id="calResync">구글 캘린더 다시 맞추기</button><span class="note">예약이 확정되면 '이솔강사님' 캘린더에 &lt;스트레칭금액完&gt;으로 자동 추가되고, 시간 변경·취소도 바로 반영돼요. 결제 전 신청은 올라가지 않아요.</span></div>
+      <div class="row" style="margin-top:6px"><button class="btn-sub" id="calResync">구글 캘린더 다시 맞추기</button><span class="note">예약이 확정되면 '이솔강사님' 캘린더에 &lt;스트레칭금액完&gt;으로 자동 추가되고, 시간 변경·취소도 바로 반영돼요. 새 예약은 들어오는 즉시 확정되고, 신청한 분은 자동으로 회원이 돼요.</span></div>
     </div>
     <div class="box">
       <div class="row" style="justify-content:space-between"><b>예약 확정 문자 자동 발송</b><button class="btn sms" id="smsBtn" aria-pressed="false">꺼짐</button></div>
@@ -546,7 +546,7 @@ const CONFIG = {
   trainer: { name:'이솔', phone:'010-3175-7357' },
   // 당일 예약은 받지 않음 (내일부터 예약 가능). 아래 문구가 이용권·날짜 화면에 표시됩니다.
   sameDayNotice: '당일 예약은 온라인으로 받지 않아요. 당일 예약은 이솔 원장님께 따로 연락주시기 바랍니다.',
-  payNote: '예약 신청 후 코치가 사전 질문을 확인하고 기존 결제 방법을 안내드립니다. 결제가 끝나면 예약이 확정됩니다.',
+  payNote: '예약은 바로 확정돼요. 결제는 코치가 사전 질문을 확인한 뒤 기존 결제 방법으로 안내드립니다.',
   categories: [
     { id:'adult', label:'일반 · 성인', minutes:50, items:[
       { id:'a-welcome', name:'웰컴 처방 스트레칭', desc:'첫 방문 1회 체험', price:100000, tag:'첫 방문' },
@@ -909,7 +909,7 @@ function updateBar(){
   if (st.step===3){ const m=formMissing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
   if (st.step===5 && contractUI){ const m=contractUI.missing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
   $('#barInfo').innerHTML = info;
-  $('#nextBtn').textContent = st.sending ? '신청 중…' : st.step===4 ? (isPkgItem() ? '서명하고 예약 신청하기' : '예약 신청하기') : '다음';
+  $('#nextBtn').textContent = st.sending ? '신청 중…' : st.step===4 ? (isPkgItem() ? '서명하고 예약하기' : '예약하기') : '다음';
   $('#nextBtn').disabled = !canNext();
 }
 function go(step){
@@ -938,7 +938,7 @@ async function submit(){
   let res;
   try { res = await Store.book(payload); } catch(e){ res = { ok:false, error:'network', message:e.message }; }
   st.sending=false;
-  if (res.ok) return showDone(payload, res.id, res.contractId);
+  if (res.ok) return showDone(payload, res.id, res.contractId, res.member);
   if (res.error==='contract'){ alert(res.message || '약정서를 다시 확인해 주세요.'); go(5); return; }
   if (res.error==='taken'){ alert('방금 다른 분이 이 시간을 예약했어요. 다른 시간을 골라 주세요.'); st.hour=null; go(2); return; }
   if (res.error==='sameday'){ alert(CONFIG.sameDayNotice); st.date=null; st.hour=null; go(2); return; }
@@ -948,12 +948,12 @@ async function submit(){
   alert('예약 신청 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.' + (res.message?`\n(${res.message})`:''));
   updateBar();
 }
-function showDone(p, id, contractId){
+function showDone(p, id, contractId, member){
   $('#bookView').classList.add('hide'); $('#bar').classList.add('hide'); $('#backBtn').classList.add('hide'); $('#foot').classList.add('hide');
-  $('#topTitle').textContent='신청 완료';
+  $('#topTitle').textContent='예약 완료';
   const dt=new Date(p.date+'T00:00:00');
   const v=$('#resultView'); v.classList.remove('hide');
-  v.innerHTML = `<div class="result"><div class="ic">✓</div><h2>예약 신청이 접수됐어요</h2>
+  v.innerHTML = `<div class="result"><div class="ic">✓</div><h2>예약이 확정됐어요</h2>
     <div style="color:var(--sub)">${esc(CONFIG.payNote)}</div>
     <div class="sum">
       <div class="row"><span>예약번호</span><span>${esc(id)}</span></div>
@@ -961,8 +961,9 @@ function showDone(p, id, contractId){
       <div class="row"><span>일시</span><span>${dt.getMonth()+1}월 ${dt.getDate()}일 (${WEEK[dt.getDay()]}) ${p.time} · ${p.minutes}분</span></div>
       <div class="row"><span>예약자</span><span>${esc(p.name)} · ${fmtPhone(p.phone)}</span></div>
       <div class="row total"><span>이용 금액</span><span>${won(p.price)}</span></div>
-    </div>${contractId ? `<div class="pay-note" style="text-align:left">약정서가 접수됐어요 (약정번호 ${esc(contractId)}). 아래 버튼으로 PDF로 저장해 보관하세요.</div><button class="btn-main" id="savePdf">약정서 PDF로 저장</button>` : ''}<a href="${location.pathname}">처음으로</a></div>`;
+    </div>${member ? `<div class="pay-note" style="text-align:left">${member.isNew ? '회원으로 등록됐어요.' : '회원 정보에 이용권을 더했어요.'} ${esc(member.item)} · 남은 횟수 ${Math.max(0, member.remaining)}회<br>다음 예약은 [기존 회원 예약]에서 이름·연락처로 바로 할 수 있어요.</div><button class="btn-main" id="goMember">회원 예약 화면으로 가기</button>` : ''}${contractId ? `<div class="pay-note" style="text-align:left">약정서가 접수됐어요 (약정번호 ${esc(contractId)}). 아래 버튼으로 PDF로 저장해 보관하세요.</div><button class="btn-main" id="savePdf">약정서 PDF로 저장</button>` : ''}<a href="${location.pathname}">처음으로</a></div>`;
   if (contractId) $('#savePdf').onclick = () => printContract(lastContract, contractId);
+  if (member) $('#goMember').onclick = () => { sessionStorage.setItem('yu_member_prefill', JSON.stringify({ name:p.name, phone:p.phone })); location.href = location.pathname + '?member'; };
   window.scrollTo(0,0);
 }
 
@@ -1312,6 +1313,8 @@ function showMember(){
     await Store.refresh().catch(()=>{}); renderHome();
   };
   $('#mPhone').addEventListener('keydown', e => { if (e.key==='Enter') $('#mLoginBtn').click(); });
+  try { const pf = JSON.parse(sessionStorage.getItem('yu_member_prefill') || 'null'); sessionStorage.removeItem('yu_member_prefill');   // 방금 예약한 신규 회원은 바로 회원 화면으로
+    if (pf && pf.name && pf.phone) { $('#mName').value = pf.name; $('#mPhone').value = pf.phone; $('#mLoginBtn').click(); } } catch (e) {}
   $('#mBookBtn').onclick = async () => {
     if (ms.hour===null) return;
     $('#mBookBtn').disabled = true; msg('#mBookMsg', '예약 중…', true);
