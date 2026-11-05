@@ -139,6 +139,22 @@
   .result.fail .ic{background:var(--red)}
   .result h2{margin:0 0 8px;font-size:24px;font-weight:900;letter-spacing:-.02em}
   .result .sum{text-align:left;margin-top:22px}
+/* 화면 전환 효과 (가벼운 transform·opacity만 사용) */
+@keyframes inR{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes inL{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes popIn{0%{opacity:0;transform:scale(.55)}70%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}
+.anim-r{animation:inR .3s cubic-bezier(.2,.8,.2,1) both}
+.anim-l{animation:inL .3s cubic-bezier(.2,.8,.2,1) both}
+.anim-up{animation:fadeUp .32s cubic-bezier(.2,.8,.2,1) both}
+.result .ic{animation:popIn .5s cubic-bezier(.2,.8,.2,1) both}
+#bookView,#memberView,#resultView{overflow-x:clip}
+/* 처음 방문·신규 ↔ 기존 회원 예약 이동 (지원 브라우저: 크롬·사파리 최신) */
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .18s ease-in both}
+::view-transition-new(root){animation:vtIn .3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes vtOut{to{opacity:0;transform:translateX(-22px)}}
+@keyframes vtIn{from{opacity:0;transform:translateX(22px)}}
 .guide{text-align:left;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:14.5px;line-height:1.65;color:var(--ink)}
 .guide dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0}
 .guide dt{font-weight:800;color:var(--sub)}
@@ -936,12 +952,26 @@ function updateBar(){
   if (st.step===3){ const m=formMissing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
   if (st.step===5 && contractUI){ const m=contractUI.missing(); if(m.length) info = `남은 항목<b style="font-size:14px">${m.slice(0,3).join(', ')}${m.length>3?' 외':''}</b>`; }
   $('#barInfo').innerHTML = info;
+  const priceMode = i && info === `${i.name}<b>${won(i.price)}</b>`;
+  if (priceMode && barShown !== i.id) countUp($('#barInfo b'), i.price);
+  if (priceMode) barShown = i.id;
   $('#nextBtn').textContent = st.sending ? '신청 중…' : st.step===4 ? (isPkgItem() ? '서명하고 예약하기' : '예약하기') : '다음';
   $('#nextBtn').disabled = !canNext();
 }
+// 하단 금액: 이용권을 고르면 0원에서 금액까지 숫자가 올라간다 (0.5초, requestAnimationFrame 한 줄 갱신이라 가벼움)
+let barShown = null, countRaf = 0;
+function countUp(el, to){
+  if (!el) return; cancelAnimationFrame(countRaf); const t0 = performance.now(), dur = 500;
+  const tick = now => { const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3), v = p < 1 ? Math.round(to * e / 1000) * 1000 : to;
+    if (el.isConnected) el.textContent = won(v); if (p < 1) countRaf = requestAnimationFrame(tick); };
+  el.textContent = won(0); countRaf = requestAnimationFrame(tick);
+}
+function animIn(el, cls){ if (!el) return; el.classList.remove('anim-r','anim-l','anim-up'); void el.offsetWidth; el.classList.add(cls); }
 function go(step){
+  const prevIdx = st.step ? flow().indexOf(st.step) : -1;
   st.step=step;
   const f = flow(), idx = f.indexOf(step);
+  if (prevIdx >= 0 && prevIdx !== idx) animIn(document.querySelector(`#bookView [data-step="${step}"]`), idx > prevIdx ? 'anim-r' : 'anim-l');
   document.querySelectorAll('#bookView [data-step]').forEach(s => s.classList.toggle('hide', Number(s.dataset.step)!==step));
   $('#stepbar').innerHTML = f.map((s,i) => `<span class="${i===idx?'on':i<idx?'done':''}">${STEP_LABEL[s]}</span>`).join('');
   $('#backBtn').classList.toggle('hide', step===1);
@@ -990,7 +1020,7 @@ function showDone(p, id, contractId, member){
   $('#topTitle').textContent='예약 완료';
   const dt=new Date(p.date+'T00:00:00');
   const v=$('#resultView'); v.classList.remove('hide');
-  v.innerHTML = `<div class="result"><div class="ic">✓</div><h2>예약이 확정됐어요</h2>
+  v.innerHTML = `<div class="result anim-up"><div class="ic">✓</div><h2>예약이 확정됐어요</h2>
     ${visitGuide(p.date, p.hour, p.minutes)}
     <div class="sum">
       <div class="row"><span>예약번호</span><span>${esc(id)}</span></div>
@@ -1359,6 +1389,7 @@ function showMember(){
   const today = () => ymd(new Date());
   const canBookDay = d => d > today() && (!mem.expires || d <= mem.expires) && slotStarts().some(h => !blockedReason(d,h));
   const renderHome = () => {
+    if ($('#mHome').classList.contains('hide')) animIn($('#mHome'), 'anim-r');
     $('#mLogin').classList.add('hide'); $('#mHome').classList.remove('hide');
     $('#mWho').textContent = `${mem.name}님`; $('#mItem').textContent = `${mem.item||'이용권'} · 총 ${mem.total}회`;
     $('#mExp').textContent = mem.expires ? `만료일 ${mem.expires}` : '만료일 없음';
@@ -1412,7 +1443,7 @@ function showMember(){
     const done = `${ms.date} ${hm(ms.hour)}`, bd = ms.date, bh = ms.hour; mem = r.member; ms.date=null; ms.hour=null; $('#mMemo').value='';
     await Store.refresh().catch(()=>{}); renderHome(); msg('#mBookMsg', `${done} 예약이 확정됐어요. 남은 횟수 ${mem.remaining}회`, true);
     const mins = (CONFIG.categories.find(c => /키즈|학생/.test(mem.item||'') ? c.id==='kids' : c.id==='adult') || {}).minutes;
-    $('#mGuide').innerHTML = `<div class="pay-note" style="margin-top:16px">✓ 예약이 확정됐어요. 남은 횟수 ${Math.max(0, mem.remaining)}회</div>` + visitGuide(bd, bh, mins);
+    $('#mGuide').innerHTML = `<div class="pay-note" style="margin-top:16px">✓ 예약이 확정됐어요. 남은 횟수 ${Math.max(0, mem.remaining)}회</div>` + visitGuide(bd, bh, mins); animIn($('#mGuide'), 'anim-up');
     $('#mGuide').scrollIntoView({ behavior:'smooth', block:'start' });
   };
   $('#mLogout').onclick = () => { $('#mGuide').innerHTML=''; cred=null; mem=null; ms.date=null; ms.hour=null; $('#mHome').classList.add('hide'); $('#mLogin').classList.remove('hide'); };
