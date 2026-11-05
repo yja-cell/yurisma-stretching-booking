@@ -196,6 +196,15 @@
   .mf{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:12px}
   .mf label{font-size:12.5px;font-weight:700;color:#4b5563;display:block;margin-bottom:4px}
   .mf .full{grid-column:1/-1}
+.bk .hd .histBtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--blue-d);cursor:pointer;vertical-align:middle;margin:0 4px}
+.hist .pass{padding:9px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.mini{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;margin-top:6px;font-family:inherit}
+.crow{display:grid;grid-template-columns:2fr 1fr 1.4fr auto;gap:8px;align-items:end;padding:8px 0;border-bottom:1px dashed var(--line)}
+.crow label{font-size:12px;font-weight:700;color:#4b5563;display:block}
+.crow input{width:100%;margin-top:3px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px;background:#fff}
+.crow .mini{margin:0 0 4px}
+@media (max-width:420px){ .crow{grid-template-columns:1fr 1.3fr auto} .crow .cname{grid-column:1/-1} }
+select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:inherit;font-size:14px}
   /* 약정서 (유리스마스쿨 디자인) */
   .doc{background:var(--card);border:1px solid var(--line);padding:22px 20px}
   .doc .dhead{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:14px}
@@ -432,7 +441,7 @@
         <button class="btn-main" id="mBookBtn" disabled>예약하기</button>
         <div class="msg" id="mBookMsg"></div>
       </div>
-      <div class="notice hide" id="mNoRemain">남은 횟수가 없거나 이용권 기간이 끝났어요. 이솔 원장님께 문의해 주세요.</div>
+      <div class="notice hide" id="mNoRemain">남은 횟수가 없거나 이용권 기간이 끝났어요. 이용권을 다시 구매하려면 <a href="./">[처음 방문·신규]</a>에서 상품을 골라 예약해 주세요. 같은 연락처로 예약하면 지금 회원 정보에 회원권이 추가돼요.</div>
       <button class="btn-sub" id="mLogout">다른 회원으로 확인하기</button>
     </section>
   </div>
@@ -477,11 +486,13 @@
       <div id="memForm" class="chg hide">
         <input type="hidden" id="mfId">
         <div class="mf">
+          <div class="full"><label>상품·지정가 불러오기 (이용권·횟수·금액을 채워줘요)</label><select id="mfPreset" class="preset"></select></div>
           <div><label>이름</label><input type="text" id="mfName" maxlength="30"></div>
           <div><label>연락처 (유리스마스쿨 가입 번호)</label><input type="tel" id="mfPhone" maxlength="13"></div>
           <div><label>이용권</label><input type="text" id="mfItem" list="mfItems" maxlength="40"><datalist id="mfItems"></datalist></div>
           <div><label>만료일 (비우면 없음)</label><input type="date" id="mfExpires"></div>
-          <div><label>총 횟수</label><input type="number" id="mfTotal" min="0" max="500"></div>
+          <div><label>총 횟수 (회원권 합)</label><input type="number" id="mfTotal" min="0" max="500"></div>
+          <div><label>결제 금액 (최근 회원권, 원)</label><input type="number" id="mfAmount" class="amtIn" min="0" step="1000" placeholder="예: 1725000"><div class="note amtHint" style="margin-top:2px"></div></div>
           <div><label>이전 사용 (시스템 도입 전 쓴 횟수)</label><input type="number" id="mfPrev" min="0" max="500"></div>
          <div><label>상태</label><select id="mfStatus"><option>활성</option><option>정지</option></select></div>
           <div><label>거주지 (시·구)</label><input type="text" id="mfRegion" maxlength="40" placeholder="예: 경기 안양"></div>
@@ -520,6 +531,13 @@
       <div style="overflow-x:auto"><table class="ptab" id="priceTable"></table></div>
       <div class="row" style="margin-top:10px"><button class="btn pri" id="savePrices">가격 저장</button></div>
       <div class="status" id="priceStatus"></div>
+    </div>
+    <div class="box" id="customBox">
+      <b>⑥ 지정가 (상품 화면에 안 보여요)</b>
+      <div class="note" style="margin-top:2px">특별 가격을 미리 등록해 두면 회원 등록·회원권 추가할 때 불러올 수 있어요. 손님 예약 화면에는 나오지 않아요. 캘린더에는 이 금액이 만원 단위로 들어가요(1,725,000원 → 172.5).</div>
+      <div id="customTable"></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="customAdd">+ 줄 추가</button><button class="btn pri" id="saveCustom">지정가 저장</button></div>
+      <div class="status" id="customStatus"></div>
     </div>
     </div>
     <a href="./" style="color:var(--blue);font-weight:800;text-decoration:none">← 예약 화면으로</a>
@@ -1026,7 +1044,7 @@ async function showAdmin(){
     const r = await Store.admin('list', key).catch(e => ({ ok:false, error:e.message }));
     if (!r.ok){ rowsCache=[]; $('#bookingList').innerHTML=''; setUnlocked(false); $('#keyStatus').textContent = key ? errText(r.error) : ''; if (r.error!=='network') sessionStorage.removeItem('yu_admin_key'); return; }
     setUnlocked(true); $('#keyStatus').textContent = '확인됐어요.';
-    rowsCache = r.rows || []; setSms(!!r.smsAuto); renderBookings(); drawMembers();
+    rowsCache = r.rows || []; setSms(!!r.smsAuto); renderBookings(); drawMembers(); if (!customCache.length) drawCustom();
   };
   /* 기간 보기 + 10개씩 더보기 */
   const PAGE = 10; let shown = PAGE, period = { from:'', to:'', key:'' };
@@ -1114,8 +1132,35 @@ async function showAdmin(){
       return run('update', { date:nd, hour:nh }, `${x.name}님 예약을 ${nd} ${hm(nh)}(으)로 바꿨어요. 손님께 변경 연락을 잊지 마세요.`); }
   };
   /* ----- 회원 관리 ----- */
-  let memCache = [], memBooking = null, mbDate = '', mbMemo = '';
-  $('#mfItems').innerHTML = CONFIG.categories.flatMap(c => c.items.map(i => `<option value="${esc(c.label.split(' ')[0]+' '+i.name)}">`)).join('');
+  let memCache = [], memBooking = null, mbDate = '', mbMemo = '', memHist = null, memPass = null, customCache = [];
+  const manwonText = n => n ? `${Math.round(Number(n)/1000)/10}` : '금액 없음';
+  // 불러오기 목록: 공개 상품(지금 판매가) + 지정가
+  const presetList = () => CONFIG.categories.flatMap(c => c.items.map(i => ({ name: c.label.split(' ')[0]+' '+i.name, count: (pkgOf(i.name)||{count:1}).count, price: i.price, tag: '' })))
+    .concat(customCache.map(x => ({ name: x.name, count: x.count, price: x.price, tag: '지정가 · ' })));
+  const presetOptions = () => '<option value="">상품·지정가 불러오기</option>' + presetList().map((p, i) => `<option value="${i}">${esc(p.tag + p.name)} · ${p.count}회 · ${won(p.price)}</option>`).join('');
+  const fillItems = () => { $('#mfItems').innerHTML = presetList().map(p => `<option value="${esc(p.name)}">`).join(''); $('#mfPreset').innerHTML = presetOptions(); };
+  fillItems();
+  const amtHint = el => { const h = el.parentElement.querySelector('.amtHint'); if (h) h.textContent = el.value ? `캘린더 표시: ${manwonText(el.value)}` : ''; };
+  $('#memForm').addEventListener('input', e => { if (e.target.classList.contains('amtIn')) amtHint(e.target); });
+  $('#mfPreset').onchange = () => { const p = presetList()[$('#mfPreset').value]; if (!p) return; $('#mfItem').value = p.name; $('#mfAmount').value = p.price; amtHint($('#mfAmount')); if (!$('#mfId').value) $('#mfTotal').value = p.count; };
+  /* ----- 지정가 ----- */
+  const drawCustom = async () => { const r = await Store.admin('custom', key).catch(() => ({ ok:false })); if (r.ok) { customCache = r.list || []; renderCustom(); fillItems(); } };
+  const renderCustom = () => { $('#customTable').innerHTML = (customCache.length ? customCache.map((x, i) => `<div class="crow" data-ci="${i}">
+      <label class="cname">이름<input type="text" data-cf="name" maxlength="40" value="${esc(x.name)}" placeholder="예: 지인 15회권"></label>
+      <label>횟수<input type="number" data-cf="count" min="1" max="500" value="${x.count}"></label>
+      <label>금액(원)<input type="number" data-cf="price" min="1000" step="1000" value="${x.price||''}"></label>
+      <button class="mini" data-cdel="${i}">삭제</button></div>`).join('') : '<div class="note">등록된 지정가가 없어요. [+ 줄 추가]로 넣으세요.</div>'); };
+  const readCustomRows = () => [...document.querySelectorAll('#customTable .crow')].map(tr => ({ name: tr.querySelector('[data-cf=name]').value.trim(), count: Number(tr.querySelector('[data-cf=count]').value), price: Number(tr.querySelector('[data-cf=price]').value) }));
+  $('#customAdd').onclick = () => { customCache = readCustomRows().concat([{ name:'', count:1, price:'' }]); renderCustom(); };
+  $('#customTable').onclick = e => { const i = e.target.dataset.cdel; if (i === undefined) return; customCache = readCustomRows().filter((_, j) => j !== Number(i)); renderCustom(); };
+  $('#saveCustom').onclick = async () => {
+    const list = readCustomRows().filter(x => x.name || x.price);
+    const bad = list.find(x => !x.name || !(x.count >= 1) || !(x.price >= 1000)); if (bad) return $('#customStatus').textContent = `${bad.name || '이름 없는 줄'}: 이름·횟수·금액을 확인해 주세요.`;
+    $('#customStatus').textContent = '저장 중…';
+    const r = await Store.admin('setCustom', key, { list }).catch(e => ({ ok:false, error:e.message }));
+    if (!r.ok) return $('#customStatus').textContent = r.message || ('저장하지 못했어요: ' + errText(r.error));
+    customCache = r.list || []; renderCustom(); fillItems(); $('#customStatus').textContent = '저장했어요. 회원 등록·회원권 추가에서 불러올 수 있어요.';
+  };
   const drawMembers = async () => {
     const r = await Store.admin('members', key).catch(e => ({ ok:false, error:e.message }));
     if (!r.ok){ memCache=[]; $('#memList').innerHTML = `<div class="note">${esc(errText(r.error))}</div>`; return; }
@@ -1131,13 +1176,25 @@ async function showAdmin(){
     $('#memList').innerHTML = memCache.length ? memCache.map(m => {
       const expired = m.expires && m.expires < today;
       return `<div class="bk ${m.status==='정지'?'cx':''}" data-mid="${esc(m.id)}">
-        <div class="hd">${esc(m.name)} <span class="tag mem">남은 ${m.remaining}회</span>${m.status==='정지'?'<span class="tag" style="background:#9ca3af">정지</span>':''}${expired?'<span class="tag" style="background:var(--red)">기간 만료</span>':''}</div>
+        <div class="hd">${esc(m.name)} <button class="histBtn" data-ma="hist" aria-expanded="${memHist===m.id}">회원권 ${(m.passes||[]).length}개 ${memHist===m.id?'▴':'▾'}</button> <span class="tag mem">남은 ${m.remaining}회</span>${m.status==='정지'?'<span class="tag" style="background:#9ca3af">정지</span>':''}${expired?'<span class="tag" style="background:var(--red)">기간 만료</span>':''}</div>
         <div class="meta"><a href="tel:${esc(m.phone)}">${esc(fmtPhone(String(m.phone)))}</a>${m.region?` · ${esc(m.region)}${m.school?', '+esc(m.school):''}`:''} · ${esc(m.item||'-')} · 총 ${m.total}회 (이전 사용 ${m.prev} · 예약 ${m.used})<br>
           만료일 ${esc(m.expires||'없음')} · 약정 ${m.contract ? (m.contract==='종이' ? '종이' : '온라인 서명') : (pkgOf(m.item) ? '<b style="color:var(--red)">없음</b>' : '-')}${m.memo?` · ${esc(m.memo)}`:''}</div>
-        <div class="acts"><button class="ok" data-ma="book">대신 예약</button><button data-ma="add">횟수 추가</button><button data-ma="edit">수정</button><button class="mdel" data-ma="del" title="회원 삭제">회원 삭제</button></div>
-        ${memBooking===m.id?memBookPanel(m):''}
+        <div class="acts"><button class="ok" data-ma="book">대신 예약</button><button data-ma="add">회원권 추가</button><button data-ma="edit">수정</button><button class="mdel" data-ma="del" title="회원 삭제">회원 삭제</button></div>
+        ${memHist===m.id?memHistPanel(m):''}${memPass===m.id?memPassPanel(m):''}${memBooking===m.id?memBookPanel(m):''}
       </div>`; }).join('') : '<div class="note">등록된 회원이 없어요. [+ 회원 등록]으로 추가하세요.</div>';
   };
+  const memHistPanel = m => `<div class="chg hist"><b>회원권 내역</b>${(m.passes||[]).map((p, i) => `<div class="pass">
+      <div><b>${i+1}. ${esc(p.item||'-')}</b> · ${p.count}회 · <b>${p.amount ? won(p.amount) : '금액 없음'}</b> <span class="note" style="margin:0">(캘린더 ${manwonText(p.amount)})</span></div>
+      <div class="note" style="margin:2px 0 0">시작일 ${esc(p.start || '첫 수업 전')} · 등록일 ${esc(p.created||'-')} · 사용 ${p.used}/${p.count} · ${esc(p.kind||'')}${p.contract?` · 약정 ${p.contract==='종이'?'종이':'온라인'}`:''}${p.memo?` · ${esc(p.memo)}`:''}</div>
+      ${p.id?`<button class="mini" data-ma="pamt" data-pid="${esc(p.id)}">금액 수정</button>`:''}</div>`).join('') || '<div class="note">회원권 기록이 없어요.</div>'}
+      <div class="note" style="margin-top:6px">시작일은 그 회원권으로 들은 첫 수업 날짜예요. 수업은 산 순서대로 회원권을 씁니다.</div></div>`;
+  const memPassPanel = m => `<div class="chg"><b>회원권 추가 (재결제·지정가)</b>
+      <select class="preset paPreset" style="margin-top:8px">${presetOptions()}</select>
+      <div class="mf"><div class="full"><label>이용권</label><input type="text" class="paItem" list="mfItems" maxlength="40"></div>
+        <div><label>횟수</label><input type="number" class="paCount" min="1" max="500" value="1"></div>
+        <div><label>결제 금액 (원)</label><input type="number" class="paAmount amtIn" min="0" step="1000"><div class="note amtHint" style="margin-top:2px"></div></div>
+        <div class="full"><label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" class="paPaper" style="width:auto"> 종이 약정서로 받음 (10·20회권)</label></div></div>
+      <div class="acts"><button class="ok" data-ma="passSave">추가</button><button data-ma="passClose">닫기</button></div></div>`;
   const memBookPanel = m => {
     const d = mbDate || '';
     const taken = h => rowsCache.some(o => o.status!=='취소' && o.date===d && o.hour===h);
@@ -1155,6 +1212,7 @@ async function showAdmin(){
     $('#mfItem').value = m ? m.item : ''; $('#mfExpires').value = m ? (m.expires||'') : ''; $('#mfTotal').value = m ? m.total : 10;
     $('#mfPrev').value = m ? m.prev : 0; $('#mfPaper').checked = !!(m && m.contract==='종이'); $('#mfStatus').value = m ? m.status : '활성'; $('#mfMemo').value = m ? (m.memo||'') : '';
     $('#mfRegion').value = m ? (m.region||'') : ''; $('#mfSchool').value = m ? (m.school||'') : '';
+    $('#mfAmount').value = m ? (m.amount||'') : ''; $('#mfPreset').value = ''; amtHint($('#mfAmount'));
    $('#memForm').scrollIntoView({ behavior:'smooth', block:'center' });
   };
   const mStatus = t => $('#memStatus').textContent = t;
@@ -1163,14 +1221,16 @@ async function showAdmin(){
   $('#mfSave').onclick = async () => {
     const member = { id:$('#mfId').value||undefined, name:$('#mfName').value.trim(), phone:$('#mfPhone').value.replace(/\D/g,''), item:$('#mfItem').value.trim(),
       expires:$('#mfExpires').value, total:Number($('#mfTotal').value||0), prev:Number($('#mfPrev').value||0), status:$('#mfStatus').value, memo:$('#mfMemo').value.trim(), paperContract:$('#mfPaper').checked,
-      region:$('#mfRegion').value.trim(), school:$('#mfSchool').value.trim() };
+      region:$('#mfRegion').value.trim(), school:$('#mfSchool').value.trim(), amount:$('#mfAmount').value === '' ? '' : Number($('#mfAmount').value) };
     mStatus('저장 중…');
     const r = await Store.admin('memberSave', key, { member }).catch(e => ({ ok:false, error:e.message }));
     if (!r.ok) return mStatus(r.message || errText(r.error));
     $('#memForm').classList.add('hide'); await drawMembers();
     mStatus(`${member.name}님 정보를 저장했어요.`);
   };
-  $('#memList').addEventListener('input', e => { if (e.target.classList.contains('mbMemo')) mbMemo = e.target.value; });
+  $('#memList').addEventListener('input', e => { if (e.target.classList.contains('mbMemo')) mbMemo = e.target.value; if (e.target.classList.contains('amtIn')) amtHint(e.target); });
+  $('#memList').addEventListener('change', e => { if (!e.target.classList.contains('paPreset')) return; const p = presetList()[e.target.value], box = e.target.closest('.chg'); if (!p) return;
+    box.querySelector('.paItem').value = p.name; box.querySelector('.paCount').value = p.count; box.querySelector('.paAmount').value = p.price; amtHint(box.querySelector('.paAmount')); });
   $('#memList').addEventListener('change', e => { if (e.target.classList.contains('mbDate')) { mbDate = e.target.value; renderMembers(); } });
   $('#memList').onclick = async e => {
     const card = e.target.closest('.bk'); if (!card) return; const m = memCache.find(x => x.id===card.dataset.mid); if (!m) return;
@@ -1187,9 +1247,19 @@ async function showAdmin(){
     }
     if (a==='book'){ memBooking = memBooking===m.id ? null : m.id; mbDate=''; mbMemo=''; return renderMembers(); }
     if (a==='close'){ memBooking=null; mbDate=''; return renderMembers(); }
-    if (a==='add'){ const n = Number(prompt(`${m.name}님에게 몇 회를 추가할까요? (재결제 등)`, '10')); if (!n || n<0) return;
-      mStatus('저장 중…'); const r = await Store.admin('memberSave', key, { member:{ ...m, total:m.total+n } }).catch(err => ({ ok:false, error:err.message }));
-      if (!r.ok) return mStatus(r.message || errText(r.error)); await drawMembers(); return mStatus(`${m.name}님 횟수를 ${n}회 추가했어요.`); }
+    if (a==='hist'){ memHist = memHist===m.id ? null : m.id; return renderMembers(); }
+    if (a==='add'){ memPass = memPass===m.id ? null : m.id; return renderMembers(); }
+    if (a==='passClose'){ memPass = null; return renderMembers(); }
+    if (a==='passSave'){ const box = e.target.closest('.chg');
+      const item = box.querySelector('.paItem').value.trim(), count = Number(box.querySelector('.paCount').value), amount = Number(box.querySelector('.paAmount').value || 0);
+      if (!item || !(count >= 1)) return mStatus('이용권 이름과 횟수를 확인해 주세요.');
+      if (!confirm(`${m.name}님에게 회원권을 추가할까요?\n${item} · ${count}회 · ${won(amount)}`)) return;
+      mStatus('저장 중…'); const r = await Store.admin('passAdd', key, { memberId:m.id, item, count, amount, paperContract: box.querySelector('.paPaper').checked }).catch(err => ({ ok:false, error:err.message }));
+      if (!r.ok) return mStatus(r.message || errText(r.error)); memPass = null; memHist = m.id; await drawMembers(); return mStatus(`${m.name}님에게 ${item} ${count}회를 추가했어요.`); }
+    if (a==='pamt'){ const p = (m.passes||[]).find(x => x.id===e.target.dataset.pid); if (!p) return;
+      const v = prompt(`${p.item} 결제 금액(원)을 입력하세요. 예: 1725000`, p.amount || ''); if (v === null) return; const n = Number(String(v).replace(/[^\d]/g,''));
+      mStatus('저장 중…'); const r = await Store.admin('passEdit', key, { id:p.id, amount:n }).catch(err => ({ ok:false, error:err.message }));
+      if (!r.ok) return mStatus(r.message || errText(r.error)); await drawMembers(); return mStatus(`${p.item} 금액을 ${won(n)}(캘린더 ${manwonText(n)})으로 바꿨어요.`); }
     if (h!==undefined){ const nh = Number(h);
       if (!confirm(`${m.name}님 ${mbDate} ${hm(nh)} 예약을 넣을까요? (남은 ${m.remaining}회 → ${m.remaining-1}회)`)) return;
       mStatus('예약 넣는 중…');
@@ -1266,7 +1336,7 @@ function showMember(){
   const ms = { view:new Date(), date:null, hour:null }; ms.view.setDate(1); ms.view.setHours(0,0,0,0);
   const msg = (id, t, ok) => { const el=$(id); el.textContent=t; el.className='msg ' + (ok?'ok':'err'); };
   const mErr = e => ({ auth:'등록된 회원 정보와 맞지 않아요. 이름과 연락처를 다시 확인해 주세요.',
-    taken:'방금 다른 예약이 들어왔어요. 다른 시간을 골라 주세요.', noRemain:'남은 횟수가 없어요. 원장님께 문의해 주세요.', expired:'이용권 만료일 이후 날짜는 예약할 수 없어요.',
+    taken:'방금 다른 예약이 들어왔어요. 다른 시간을 골라 주세요.', noRemain:'남은 횟수가 없어요. [처음 방문·신규]에서 이용권을 다시 구매해 주세요.', expired:'이용권 만료일 이후 날짜는 예약할 수 없어요.',
     sameday:CONFIG.sameDayNotice, notOpen:openNoticeText(), preview:'구글 시트가 연결되지 않았어요.', network:'연결이 불안정해요. 잠시 후 다시 시도해 주세요.' }[e] || '문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
   const today = () => ymd(new Date());
   const canBookDay = d => d > today() && (!mem.expires || d <= mem.expires) && slotStarts().some(h => !blockedReason(d,h));

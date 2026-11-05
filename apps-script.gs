@@ -50,6 +50,11 @@ const CON_H = ['약정번호', '작성시각', '상태', '이름', '연락처', 
   '사용 시작', '사용 종료', '보호자 성명', '보호자 관계', '보호자 연락처', '필수 동의', '민감정보 동의', '전후사진 SNS', '영상 SNS', '후기 활용',
   '얼굴 노출', '서명자', '서명(이미지)', '예약번호', '작성 환경'];
 const PACKAGES = { '10회권': { count: 10, days: 70 }, '20회권': { count: 20, days: 140 } };
+// 회원권: 회원이 산 이용권 하나하나. 캘린더 금액은 그 예약이 속한 회원권의 '결제 금액'을 쓴다.
+const PASS_H = ['회원권번호', '회원번호', '이용권', '횟수', '결제 금액', '등록일', '구분', '예약번호', '약정서', '메모'];
+const P = { id: 0, member: 1, item: 2, count: 3, amount: 4, created: 5, kind: 6, booking: 7, contract: 8, memo: 9 };
+// 지정가: 상품 화면에는 안 보이고 관리자가 회원권을 넣을 때만 고르는 가격
+const CUSTOM_H = ['이름', '횟수', '금액'];
 const TRAINER = { name: '이솔', phone: '010-3175-7357' };
 
 function setup() {
@@ -60,6 +65,9 @@ function setup() {
   ms.getRange(1, 1, 1, MEM_H.length).setValues([MEM_H]).setFontWeight('bold');
   if (ms.getMaxColumns() > MEM_H.length) ms.getRange(1, MEM_H.length + 1, 1, ms.getMaxColumns() - MEM_H.length).clearContent();
   readPrices_();   // '가격' 탭이 없으면 기본값으로 만든다
+  sheet_('회원권', PASS_H).getRange(1, 1, 1, PASS_H.length).setValues([PASS_H]).setFontWeight('bold');
+  sheet_('지정가', CUSTOM_H);
+  Logger.log('회원권 옮김: ' + withLock_(() => ({ ok: true, made: migratePasses_() })).made + '명');
   const cal = calendar_();
   Logger.log('연동 캘린더: ' + (cal ? cal.getName() : '찾지 못함'));
   if (cal && calOn_()) Logger.log('캘린더 맞춤: ' + JSON.stringify(calResyncAll_()));
@@ -100,7 +108,7 @@ function doPost(e) {
   if (d.action === 'memberBook') return json_(memberBook_(d));
   if (d.action === 'adminRecover') return json_(adminRecover_());
   if (d.action === 'contract') return json_(contractOnly_(d));
-  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1, setMemo: 1 };
+  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1, setMemo: 1, passAdd: 1, passEdit: 1, custom: 1, setCustom: 1 };
   if (!adminActions[d.action]) return json_({ ok: false, error: 'unknown' });
   const auth = checkAdmin_(d.key);
   if (!auth.ok) return json_(auth);
@@ -119,6 +127,10 @@ function doPost(e) {
     case 'memberDelete': return json_(memberDelete_(String(d.id || '')));
     case 'setPrices': return json_(writePrices_(d.prices || {}));
     case 'adminBook': return json_(adminBook_(d));
+    case 'passAdd': return json_(passAddAdmin_(d));
+    case 'passEdit': return json_(passEdit_(d));
+    case 'custom': return json_({ ok: true, list: readCustom_() });
+    case 'setCustom': return json_(writeCustom_(d.list || []));
   }
 }
 
@@ -157,7 +169,7 @@ function book_(d) {
     const id = newId_('YU');
     let conId = '';
     if (con) { con.start = con.start || d.date; conId = saveContract_(con, id); }
-    const mem = autoMember_(d, phone, pr, pkg, conId, region, school);   // 수업을 신청하면 바로 회원으로 등록(또는 기존 회원에 횟수 추가)
+    const mem = autoMember_(d, phone, pr, pkg, conId, region, school, id);   // 수업을 신청하면 바로 회원으로 등록(또는 기존 회원에 횟수 추가)
     appendBooking_({ id: id, status: '확정', date: d.date, hour: hour, cat: d.category, item: d.itemName, price: pr.price, name: d.name, phone: phone,
       gender: d.gender, age: d.age, area: [].concat(d.area || []).join(', '), pain: Number(d.pain) || 0, med: [].concat(d.med || []).join(', '),
       medDetail: d.medDetail, route: d.route, memo: d.memo, agreed: 'Y', note: [con ? '약정서 서명' : '', mem.note].filter(String).join(' / '),
@@ -178,19 +190,125 @@ function book_(d) {
 
 // 신규 신청 → 회원 자동 등록. 같은 연락처의 같은 이름 회원이 있으면 새 이용권 횟수를 더한다.
 // 같은 연락처에 다른 이름 회원이 있으면(형제가 보호자 번호를 같이 쓰는 경우 등) 연결하지 않고 관리 기록에 남긴다. (잠금 안에서 호출)
-function autoMember_(d, phone, pr, pkg, conId, region, school) {
+// 연락처가 같은 회원이 있으면 회원을 새로 만들지 않고 회원권만 추가한다(이름이 달라도 같은 번호면 같은 회원). (잠금 안에서 호출)
+function autoMember_(d, phone, pr, pkg, conId, region, school, bookingId) {
   const s = sheet_('회원', MEM_H), name = String(d.name || '').trim(), count = pkg ? pkg.count : 1;
   const m = members_().find(x => x.phone === phone);
-  if (m && normName_(m.name) !== normName_(name)) return { id: '', note: '회원 연결 안 됨(같은 연락처에 다른 이름 회원 ' + m.name + ')' };
+  const diff = m && normName_(m.name) !== normName_(name) ? '예약 이름 ' + name + '(회원 이름과 다름)' : '';
+  const pass = { item: pr.name, count: count, amount: pr.price, kind: '신규 예약', booking: bookingId, contract: conId, memo: diff };
   if (!m) {
     const id = newId_('M');
     s.appendRow([id, safe_(name), "'" + phone, pr.name, count, 0, 0, count, '', '활성', '', today_(), conId, safe_(region), safe_(school)]);
+    passAppend_(id, pass);
     return { id: id, isNew: true, note: '회원 자동 등록' };
   }
-  s.getRange(m.row, M.item + 1, 1, 2).setValues([[pr.name, m.total + count]]);
+  migratePasses_(m.id);
+  passAppend_(m.id, pass);
+  syncMemberPasses_(m.id);
   if (conId) s.getRange(m.row, M.contract + 1).setValue(conId);
   if (region) s.getRange(m.row, M.region + 1, 1, 2).setValues([[safe_(region), safe_(school || m.school)]]);
-  return { id: m.id, isNew: false, note: '기존 회원에 ' + count + '회 추가' };
+  return { id: m.id, isNew: false, note: '기존 회원에 회원권 추가(' + pr.name + ')' + (diff ? ' / ' + diff : '') };
+}
+
+/* ---------- 회원권 ---------- */
+function passes_() {
+  const v = sheet_('회원권', PASS_H).getDataRange().getDisplayValues(), out = [];
+  for (let i = 1; i < v.length; i++) {
+    const r = v[i]; if (!r[P.id]) continue;
+    out.push({ row: i + 1, id: String(r[P.id]), memberId: String(r[P.member]), item: String(r[P.item]), count: Number(r[P.count]) || 0,
+      amount: Number(digits_(r[P.amount])) || 0, created: dateStr_(r[P.created]) || String(r[P.created] || ''), kind: String(r[P.kind] || ''),
+      booking: String(r[P.booking] || ''), contract: String(r[P.contract] || ''), memo: String(r[P.memo] || '') });
+  }
+  return out;
+}
+// 회원권 기록이 없는 예전 회원은 회원 줄 값으로 '기존' 회원권 하나를 만든다. (금액은 지금 가격표 기준, 관리자가 고칠 수 있음)
+function migratePasses_(onlyId) {
+  const have = {}; passes_().forEach(p => have[p.memberId] = 1);
+  let made = 0;
+  members_().filter(m => !have[m.id] && (!onlyId || m.id === onlyId) && m.total > 0).forEach(m => {
+    passAppend_(m.id, { item: m.item, count: m.total, amount: packagePrice_(m.item), kind: '기존', created: m.created, contract: m.contract, memo: '' }); made++;
+  });
+  return made;
+}
+function passAppend_(memberId, p) {
+  const id = newId_('P');
+  sheet_('회원권', PASS_H).appendRow([id, memberId, safe_(p.item || ''), Number(p.count) || 0, Number(p.amount) || 0, "'" + (p.created || today_()),
+    p.kind || '', p.booking || '', p.contract || '', safe_(p.memo || '')]);
+  return id;
+}
+function passesFor_(m, all) {   // 회원권 기록이 없으면 회원 줄로 만든 가상 회원권 하나
+  const ps = all.filter(p => p.memberId === m.id);
+  return ps.length ? ps : [{ id: '', item: m.item, count: m.total, amount: packagePrice_(m.item), created: m.created, kind: '기존', virtual: true }];
+}
+function passAt_(ps, pos) {   // pos번째 수업이 속한 회원권과 그 안에서의 회차
+  let cum = 0;
+  for (const p of ps) { if (pos <= cum + p.count) return { p: p, n: pos - cum }; cum += p.count; }
+  const last = ps[ps.length - 1]; return last ? { p: last, n: pos - (cum - last.count) } : null;
+}
+function syncMemberPasses_(memberId) {   // 회원 줄의 이용권(최근)·총 횟수(합)를 회원권에 맞춘다
+  const m = members_().find(x => x.id === memberId); if (!m) return;
+  const ps = passes_().filter(p => p.memberId === memberId); if (!ps.length) return;
+  sheet_('회원', MEM_H).getRange(m.row, M.item + 1, 1, 2).setValues([[safe_(ps[ps.length - 1].item), ps.reduce((a, p) => a + p.count, 0)]]);
+  recalc_(memberId);
+}
+function passInfo_(m, rows, all) {   // 관리자 화면용: 회원권별 시작일(첫 수업일)·사용 횟수
+  const ps = passesFor_(m, all), used = ps.map(() => 0), start = ps.map(() => '');
+  for (let k = 0; k < m.prev; k++) { const h = passAt_(ps, k + 1); if (h) used[ps.indexOf(h.p)]++; }
+  rows.filter(r => r.memberId === m.id && r.active && r.status !== '신청').sort((a, c) => (a.date + hm_(a.hour)).localeCompare(c.date + hm_(c.hour)))
+    .forEach((r, i) => { const h = passAt_(ps, m.prev + i + 1); if (!h) return; const j = ps.indexOf(h.p); used[j]++; if (!start[j]) start[j] = r.date; });
+  return ps.map((p, j) => ({ id: p.id, item: p.item, count: p.count, amount: p.amount, created: p.created, kind: p.kind, memo: p.memo, contract: p.contract, used: used[j], start: start[j] }));
+}
+// 관리자: 회원권 추가(재결제·지정가 등)
+function passAddAdmin_(d) {
+  const item = String(d.item || '').trim(), count = Math.round(Number(d.count) || 0), amount = Math.round(Number(d.amount) || 0);
+  if (!item || item.length > 40 || count < 1 || count > 500 || amount < 0 || amount > 100000000) return { ok: false, error: 'invalid', message: '이용권·횟수·금액을 확인해 주세요.' };
+  const res = withLock_(() => {
+    const m = members_().find(x => x.id === String(d.memberId || '')); if (!m) return { ok: false, error: 'notfound' };
+    migratePasses_(m.id);
+    let con = d.paperContract ? '종이' : '';
+    if (packageOf_(item) && !con) {   // 10·20회권은 아직 회원권에 연결 안 된 온라인 약정서가 있어야 한다
+      const usedC = {}; passes_().forEach(p => usedC[p.contract] = 1);
+      const free = contractsByPhone_(m.phone).filter(c => !usedC[c.id]).pop();
+      if (!free) return { ok: false, error: 'noContract' };
+      con = free.id;
+    }
+    passAppend_(m.id, { item: item, count: count, amount: amount, kind: '관리자 추가', contract: con, memo: String(d.memo || '').slice(0, 100) });
+    syncMemberPasses_(m.id);
+    if (con) sheet_('회원', MEM_H).getRange(m.row, M.contract + 1).setValue(con);
+    return { ok: true, id: m.id };
+  });
+  if (res.ok) calSyncMember_(res.id);
+  return res;
+}
+// 관리자: 회원권 결제 금액 고치기
+function passEdit_(d) {
+  const amount = Math.round(Number(d.amount)), res = withLock_(() => {
+    if (!(amount >= 0) || amount > 100000000) return { ok: false, error: 'invalid', message: '금액을 확인해 주세요.' };
+    const p = passes_().find(x => x.id === String(d.id || '')); if (!p) return { ok: false, error: 'notfound' };
+    sheet_('회원권', PASS_H).getRange(p.row, P.amount + 1).setValue(amount);
+    return { ok: true, id: p.memberId };
+  });
+  if (res.ok) calSyncMember_(res.id);
+  return res;
+}
+/* ---------- 지정가 (상품 화면에 안 보임) ---------- */
+function readCustom_() {
+  const v = sheet_('지정가', CUSTOM_H).getDataRange().getDisplayValues(), out = [];
+  for (let i = 1; i < v.length; i++) { const name = String(v[i][0]).trim(); if (name) out.push({ name: name, count: Number(v[i][1]) || 1, price: Number(digits_(v[i][2])) || 0 }); }
+  return out;
+}
+function writeCustom_(list) {
+  list = [].concat(list).slice(0, 30);
+  for (const x of list) {
+    const name = String(x.name || '').trim(), count = Math.round(Number(x.count)), price = Math.round(Number(x.price));
+    if (!name || name.length > 40 || !(count >= 1 && count <= 500) || !(price >= 1000 && price <= 100000000)) return { ok: false, error: 'invalid', message: (name || '이름 없는 줄') + ': 이름·횟수·금액을 확인해 주세요.' };
+  }
+  return withLock_(() => {
+    const s = sheet_('지정가', CUSTOM_H);
+    if (s.getLastRow() > 1) s.getRange(2, 1, s.getLastRow() - 1, CUSTOM_H.length).clearContent();
+    if (list.length) s.getRange(2, 1, list.length, 3).setValues(list.map(x => [safe_(String(x.name).trim()), Math.round(Number(x.count)), Math.round(Number(x.price))]));
+    return { ok: true, list: readCustom_() };
+  });
 }
 
 /* ---------- 약정서 ---------- */
@@ -336,13 +454,24 @@ function memberSave_(x) {
       if (last) { vals.region = vals.region || safe_(last.r[C.region] || ''); vals.school = vals.school || safe_(last.r[C.school] || ''); }
     }
     let id;
+    const amountIn = x.amount === '' || x.amount == null ? null : Math.round(Number(x.amount));
+    if (amountIn !== null && !(amountIn >= 0 && amountIn <= 100000000)) return { ok: false, error: 'invalid', message: '결제 금액을 확인해 주세요.' };
     if (!m) {
       id = newId_('M');
       s.appendRow([id, vals.name, vals.phone, vals.item, total, prev, 0, total - prev, vals.expires, vals.status, vals.memo,
         Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'), conTag, vals.region, vals.school]);
+      if (total > 0) passAppend_(id, { item: x.item || '', count: total, amount: amountIn !== null ? amountIn : packagePrice_(x.item), kind: '관리자 등록', contract: conTag });
     } else {
       id = m.id;
       const row = m.row;
+      // 회원권: 최근 회원권을 고친 값에 맞춘다(총 횟수 = 회원권 횟수의 합)
+      migratePasses_(m.id);
+      const ps = passes_().filter(p => p.memberId === m.id);
+      if (ps.length) {
+        const last = ps[ps.length - 1], others = ps.slice(0, -1).reduce((a, p) => a + p.count, 0);
+        if (total - others < 1) return { ok: false, error: 'invalid', message: '총 횟수는 이전 회원권 횟수 합(' + others + '회)보다 커야 해요.' };
+        sheet_('회원권', PASS_H).getRange(last.row, P.item + 1, 1, 3).setValues([[vals.item, total - others, amountIn !== null ? amountIn : last.amount]]);
+      }
       s.getRange(row, M.name + 1, 1, 2).setValues([[vals.name, vals.phone]]);
       s.getRange(row, M.item + 1, 1, 3).setValues([[vals.item, total, prev]]);
       s.getRange(row, M.expires + 1, 1, 3).setValues([[vals.expires, vals.status, vals.memo]]);
@@ -438,23 +567,22 @@ function packagePrice_(item) {   // 회원 이용권 이름으로 현재 가격�
   const id = Object.keys(p).find(k => k.indexOf(kids ? 'k-' : 'a-') === 0 && (p[k].name === s || strip(p[k].name) === base));
   return id ? p[id].price : 0;
 }
-function calTitle_(b, rows, members) {
+function calTitle_(b, rows, members, passes) {
   const r = b.r, m = b.memberId ? members.find(x => x.id === b.memberId) : null;
-  const price = Number(digits_(r[C.price])) || (m ? packagePrice_(m.item) : 0);
+  let price = Number(digits_(r[C.price])) || 0, count = '';
   const paid = calShow_(b);
   const where = [String(r[C.region] || (m && m.region) || '').trim(), String(r[C.school] || (m && m.school) || '').trim()].filter(String).join(', ');
-  let count = '';
-  if (m && m.total && packageOf_(m.item)) {   // 회차는 10·20회권만
+  if (m) {   // 회원 예약: 이 예약이 속한 회원권의 결제 금액, 회차는 2회 이상 회원권만 (예: 10/3)
     const mine = rows.filter(x => x.memberId === m.id && x.active && x.status !== '신청').sort((a, c) => (a.date + hm_(a.hour)).localeCompare(c.date + hm_(c.hour)));
-    // 가장 최근에 산 이용권 기준으로 셈다. 예: 웰컴 1회 들은 뒤 10회권을 사면 총 11회지만 제목은 10/1, 10/2 …
-    const pk = packageOf_(m.item), pos = m.prev + mine.findIndex(x => x.id === b.id) + 1, n = pos - Math.max(0, m.total - pk.count);
-    count = n >= 1 ? pk.count + '/' + n : m.total + '/' + pos;
+    const idx = mine.findIndex(x => x.id === b.id), hit = idx >= 0 ? passAt_(passesFor_(m, passes || []), m.prev + idx + 1) : null;
+    if (hit) { price = hit.p.amount || price || packagePrice_(hit.p.item); if (hit.p.count > 1) count = hit.p.count + '/' + hit.n; }
+    else price = price || packagePrice_(m.item);
   } else { const pkg = packageOf_(r[C.item]); if (pkg) count = pkg.count + '/1'; }
   return '<스트레칭' + manwon_(price) + (paid ? '完' : '') + '>' + String(r[C.name]).trim() + (where ? '(' + where + ')' : '') + fmtPhone_(b.phone)
     + (count ? ', ' + count : '') + (b.status === '노쇼' ? ' (노쇼)' : '');
 }
 // 캘린더 작업은 항상 잠금 안에서 최신 시트를 다시 읽고 한다. (여러 건을 연달아 취소해도 서로 덮어쓰지 않게)
-function calCtx_() { return { rows: bookingRows_(), members: members_(), cal: calendar_() }; }
+function calCtx_() { return { rows: bookingRows_(), members: members_(), passes: passes_(), cal: calendar_() }; }
 function calSync_(id) {
   if (!calOn_()) return;
   try { withLock_(() => calSyncCore_(id, calCtx_())); } catch (e) { Logger.log('캘린더 연동 실패 ' + id + ': ' + e); }
@@ -479,7 +607,7 @@ function calSyncCore_(id, ctx) {
     return;
   }
   const start = new Date(b.date + 'T' + hm_(b.hour) + ':00+09:00'), end = new Date(start.getTime() + SLOT_MIN * 60000);
-  const title = calTitle_(b, ctx.rows, ctx.members);
+  const title = calTitle_(b, ctx.rows, ctx.members, ctx.passes);
   // 설명 맨 위: 요청(회원 예약의 요청사항) → 메모(관리자) → 빈 줄 → 나머지. 신규 신청의 요청사항은 건강 정보가 섞일 수 있어 넣지 않는다.
   const req = String(b.r[C.cat]) === '회원' ? String(b.r[C.memo] || '').trim() : '';   // 회원 예약 화면에서 적은 요청만
   const memo = String(b.r[C.calMemo] || '').trim();
@@ -559,7 +687,10 @@ function writePrices_(p) {
     return { ok: true, prices: readPrices_() };
   });
 }
-function memberViews_() { const rows = bookingRows_(); return members_().map(m => memberView_(m, rows)); }
+function memberViews_() {   // 관리자 화면: 회원권 내역(이용권·금액·시작일)과 최근 결제 금액을 함께
+  const rows = bookingRows_(), all = passes_();
+  return members_().map(m => { const v = memberView_(m, rows), ps = passInfo_(m, rows, all); v.passes = ps; v.amount = ps.length ? ps[ps.length - 1].amount : 0; return v; });
+}
 function publicMember_(m, rows) {
   const v = memberView_(m, rows), today = today_();
   const upcoming = rows.filter(r => r.memberId === m.id && r.active && r.date >= today)
