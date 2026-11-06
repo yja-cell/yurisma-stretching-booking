@@ -149,6 +149,7 @@
 .anim-up{animation:fadeUp .32s cubic-bezier(.2,.8,.2,1) both}
 .result .ic{animation:popIn .5s cubic-bezier(.2,.8,.2,1) both}
 #bookView,#memberView,#resultView{overflow-x:clip}
+.homelink{display:inline-flex;align-items:center;cursor:pointer}
 @keyframes pick{0%{transform:scale(.72)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
 .cal button.day.on{animation:pick .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes slotIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -267,7 +268,7 @@ select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-r
   <div class="demo-flag hide" id="demoFlag">미리보기 모드 · 예약이 이 브라우저에만 저장됩니다 (구글 시트 미연결)</div>
   <header class="top"><div class="in">
     <button class="back hide" id="backBtn" aria-label="이전">←</button>
-    <img src="https://yurismaschool.com/brand/yurisma-school-logo.png" alt="Yurisma School" />
+    <a href="./" class="homelink" aria-label="첫 화면으로"><img src="https://yurismaschool.com/brand/yurisma-school-logo.png" alt="Yurisma School" /></a>
     <div class="ttl" id="topTitle">유리스마 스트레칭</div>
   </div></header>
 
@@ -446,7 +447,7 @@ select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-r
       <div class="fbox">
         <label class="f">이름</label><input type="text" id="mName" autocomplete="name" maxlength="30" placeholder="홍길동">
         <label class="f">연락처</label><input type="tel" id="mPhone" autocomplete="tel" inputmode="numeric" maxlength="13" placeholder="010-0000-0000">
-       <button class="btn-main" id="mLoginBtn">남은 횟수 확인하기</button>
+       <button class="btn-main" id="mLoginBtn">예약하기</button>
         <div class="msg" id="mLoginMsg"></div>
       </div>
       <div class="note">학생·키즈 회원은 <b>자녀 이름 + 보호자 연락처</b>로 확인해요. 등록된 회원 정보가 확인되지 않으면 이솔 원장님께 문의해 주세요.</div>
