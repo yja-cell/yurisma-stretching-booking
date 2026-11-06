@@ -369,11 +369,11 @@ function contractHtml_(c, id) {
     + 'th{background:#f3f6fa;width:16%}h2{font-size:13px;margin:14px 0 4px;color:#2d7dd2}.sig{height:70px}</style></head><body>'
     + '<div class="brand">Yurisma School · 유리스마 스트레칭</div><h1>개인 트레이닝 약정서</h1><div>약정번호 ' + esc(id) + ' · 작성 ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm') + '</div>'
     + '<table>' + row('회원 성명', esc(c.name), '연락처', esc(c.phone)) + row('주소', esc(c.address), '생년월일', esc(c.birth))
-    + row('상품', esc(c.product) + ' (주 1회 / 1회 ' + c.minutes + '분)', '결제 방법', esc(c.pay)) + row('회당 수강료', won(c.unit) + ' (1회 정가 150,000원)', '강습비 합계', won(c.total))
+    + row('상품', esc(c.product) + ' (주 1회 / 1회 ' + c.minutes + '분)', '결제 방법', esc(c.pay)) + row('회당 수강료', won(c.unit) + ' (1회 정가 ' + oneList_() + ')', '강습비 합계', won(c.total))
     + row('사용기간', (c.start ? esc(c.start) + ' ~ ' + esc(end) : '첫 수업일부터 ' + c.pkg.days + '일') + ' (첫 수업일부터 10회권 70일 / 20회권 140일)')
     + row('담당 트레이너', TRAINER.name, '트레이너 연락처', TRAINER.phone)
     + (c.guardianName ? row('보호자(법정대리인)', esc(c.guardianName) + ' (' + esc(c.guardianRel) + ')', '보호자 연락처', esc(c.guardianPhone)) : '') + '</table>'
-    + CONTRACT_TERMS_HTML
+    + CONTRACT_TERMS_HTML.replace('1회 정가 150,000원', '1회 정가 ' + oneList_())
     + '<h2>개인정보 수집·이용 동의</h2><table><tr><th>필수</th><td>성명, 연락처, 주소, 생년월일, 결제 정보 / 계약 이행·일정 안내·환불 처리 / 계약 종료 후 3년</td><td>■ 동의</td></tr>'
     + '<tr><th>필수(민감정보)</th><td>질환, 통증, 수술 이력, 복용 약 등 건강 정보 / 안전한 운동 프로그램 설계 / 계약 종료 시 파기</td><td>■ 동의</td></tr>'
     + '<tr><th>선택</th><td>전·후 사진 촬영 및 인스타그램 등 SNS 게시</td><td>' + yn(c.snsPhoto) + '</td></tr>'
@@ -665,13 +665,22 @@ function memberView_(m, rows) {
 // '가격' 탭·관리자 [가격 관리] 금액은 부가세 제외 기준. 손님 화면·예약·약정서·회원권 금액은 salePrices_()를 쓴다.
 const VAT_FROM = '2026-12-01';
 function vatOn_() { return today_() >= VAT_FROM; }
+// 약정서의 '1회 정가'(중도 해지 시 진행 세션 계산 기준): 12월 1일부터 부가세 포함 165,000원
+function oneList_() { return vatOn_() ? '165,000원' : '150,000원'; }
+// 12월 1일이 지나면 '이벤트가' 배지를 한 번만 자동으로 끈다(그 뒤 관리자가 다시 켤 수 있음)
+function eventOffOnce_(s) {
+  const pr = PropertiesService.getScriptProperties();
+  if (!vatOn_() || pr.getProperty('EVENT_OFF_DONE') === VAT_FROM || s.getLastRow() < 2) return;
+  s.getRange(2, 5, s.getLastRow() - 1, 1).setValue('N'); pr.setProperty('EVENT_OFF_DONE', VAT_FROM);
+}
 function salePrices_() {
   const p = readPrices_(); if (!vatOn_()) return p;
   const out = {}; Object.keys(p).forEach(k => { out[k] = Object.assign({}, p[k], { price: Math.round(p[k].price * 1.1), list: p[k].list ? Math.round(p[k].list * 1.1) : 0 }); });
   return out;
 }
 function readPrices_() {
-  const s = sheet_('가격', PRICE_H), v = s.getDataRange().getDisplayValues(), out = {};
+  const s = sheet_('가격', PRICE_H); eventOffOnce_(s);
+  const v = s.getDataRange().getDisplayValues(), out = {};
   for (let i = 1; i < v.length; i++) {
     const id = String(v[i][0]).trim(); if (!PRICE_DEFAULT[id]) continue;
     out[id] = { name: PRICE_DEFAULT[id].name, price: Number(digits_(v[i][2])) || PRICE_DEFAULT[id].price, list: Number(digits_(v[i][3])) || 0, event: /^(Y|예|O|true|1)$/i.test(String(v[i][4]).trim()) };
