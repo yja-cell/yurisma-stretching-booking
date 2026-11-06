@@ -96,7 +96,7 @@ function adminRecover_() {
 /* ---------- 입구 ---------- */
 function doGet(e) {
   const a = (e.parameter || {}).action;
-  if (a === 'slots') return json_({ ok: true, today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: readPrices_() });
+  if (a === 'slots') return json_({ ok: true, today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: readPrices_(), vat: { on: vatOn_(), from: VAT_FROM } });
   return json_({ ok: false, error: 'unknown' });
 }
 
@@ -157,7 +157,7 @@ function book_(d) {
   if (!region || region.length > 40 || school.length > 40 || (kids && !school)) return { ok: false, error: 'invalid', message: kids ? '거주지와 학교를 입력해 주세요.' : '거주지를 입력해 주세요.' };
   const pkg = packageOf_(d.itemName);
   let con = null;
-  const pr = readPrices_()[d.itemId];
+  const pr = salePrices_()[d.itemId];   // 부가세 적용 후 금액(12월부터)
   if (!pr || !String(d.itemName || '') || pr.name.slice(-String(d.itemName).length) !== String(d.itemName)) return { ok: false, error: 'invalid', message: '상품 오류' };
   if (pkg) { con = checkContract_(Object.assign({}, d.contract, { itemId: d.itemId }), d.itemName, d.category); if (!con.ok) return con; con = con.c; }
   const res = withLock_(() => {
@@ -332,7 +332,7 @@ function checkContract_(c, item, category) {
     snsPhoto: !!c.snsPhoto, snsVideo: !!c.snsVideo, review: !!c.review, face: !!c.face, signer: gName ? gName + '(' + gRel + ', 보호자)' : name,
     sign: String(c.sign), ua: String(c.ua || '').slice(0, 200) } };
 }
-function priceTotal_(c) { const p = c && c.itemId ? readPrices_()[c.itemId] : null; return p ? p.price : 0; }   // 금액은 서버 가격표 기준
+function priceTotal_(c) { const p = c && c.itemId ? salePrices_()[c.itemId] : null; return p ? p.price : 0; }   // 금액은 서버 가격표 기준
 function ageOn_(birth, onDate) { const b = birth.split('-').map(Number), o = onDate.split('-').map(Number); let a = o[0] - b[0]; if (o[1] < b[1] || (o[1] === b[1] && o[2] < b[2])) a--; return a; }
 function endDate_(start, days) { if (!start) return ''; return addDays_(start, days - 1); }
 function saveContract_(c, bookingId) {
@@ -562,7 +562,7 @@ function fmtPhone_(p) { p = digits_(p); return p.length === 11 ? p.replace(/(\d{
 function packagePrice_(item) {   // 회원 이용권 이름으로 현재 가격표 금액을 찾는다
   // 예: '일반 20회권', '성인 1회권', '학생 키즈 웰컴 스트레칭', '학생 10회권' (학생·키즈가 들어 있으면 키즈 가격)
   const s = String(item || '').trim(), kids = /학생|키즈/.test(s), strip = t => t.replace(/^((일반|성인|학생|키즈)[\s·]*)+/, '').trim();
-  const p = readPrices_(), base = strip(s);
+  const p = salePrices_(), base = strip(s);
   const id = Object.keys(p).find(k => k.indexOf(kids ? 'k-' : 'a-') === 0 && (p[k].name === s || strip(p[k].name) === base));
   return id ? p[id].price : 0;
 }
@@ -661,6 +661,15 @@ function memberView_(m, rows) {
 }
 
 /* ---------- 가격 ---------- */
+// 부가세: 2026-11-30까지는 부가세 제외 할인 이벤트, 2026-12-01(한국 시간)부터 판매가에 부가세 10%를 더해 받는다.
+// '가격' 탭·관리자 [가격 관리] 금액은 부가세 제외 기준. 손님 화면·예약·약정서·회원권 금액은 salePrices_()를 쓴다.
+const VAT_FROM = '2026-12-01';
+function vatOn_() { return today_() >= VAT_FROM; }
+function salePrices_() {
+  const p = readPrices_(); if (!vatOn_()) return p;
+  const out = {}; Object.keys(p).forEach(k => { out[k] = Object.assign({}, p[k], { price: Math.round(p[k].price * 1.1), list: p[k].list ? Math.round(p[k].list * 1.1) : 0 }); });
+  return out;
+}
 function readPrices_() {
   const s = sheet_('가격', PRICE_H), v = s.getDataRange().getDisplayValues(), out = {};
   for (let i = 1; i < v.length; i++) {
