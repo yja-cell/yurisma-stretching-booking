@@ -226,62 +226,6 @@
   .mf{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:12px}
   .mf label{font-size:12.5px;font-weight:700;color:#4b5563;display:block;margin-bottom:4px}
   .mf .full{grid-column:1/-1}
-/* 결제 버튼 (회사 결제 페이지로 연결, 주소는 CONFIG.payUrl) */
-a.btn-main.pay{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
-.pay-wait{font-size:12.5px;color:var(--sub);margin-top:6px;text-align:center}
-/* 수업일지 */
-.jn-pend{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;margin-top:10px}
-.jn-pend b.t{display:block;color:#c2410c;font-size:13.5px;margin-bottom:4px}
-.jn-pend .p{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:13px;padding:6px 0;border-top:1px dashed #fed7aa}
-.jn-pend .p:first-of-type{border-top:0}
-.jn-pend .p button{flex:none;border:0;border-radius:999px;padding:6px 11px;background:#ea580c;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:12.5px}
-.jn-late{color:var(--red);font-weight:800}
-.jn-left{color:#c2410c;font-weight:700}
-.jn-date{display:flex;gap:6px;align-items:center;margin-top:12px}
-.jn-date input{flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
-.jn-date .btn{flex:none;white-space:nowrap}
-.jn-list{margin-top:10px;display:grid;gap:6px}
-.jn-row{display:flex;gap:8px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;font-family:inherit;font-size:14px;color:var(--ink)}
-.jn-row.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-t)}
-.jn-row .tm{font-weight:800;min-width:46px}
-.jn-row .ses{color:var(--sub);font-size:12.5px;margin-left:auto;white-space:nowrap}
-.jw{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;white-space:nowrap;background:var(--soft);color:#4b5563}
-.jw.w-완료{background:var(--blue);color:#fff} .jw.w-수업전입력{background:var(--blue-t);color:var(--blue-d)}
-.jw.w-숙제발송전{background:#ffedd5;color:#c2410c} .jw.w-취소,.jw.w-노쇼{background:#e5e7eb;color:#6b7280}
-.jn-ed{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
-.jn-ed h4{margin:0 0 2px;font-size:16px}
-.jn-ed .sub{font-size:12.5px;color:var(--sub)}
-.jn-sec{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
-.jn-sec>b{display:block;font-size:13.5px;margin-bottom:8px}
-.jn-sec label.l{display:block;font-size:12.5px;font-weight:700;color:#4b5563;margin:10px 0 4px}
-.jn-ed input[type=text],.jn-ed textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff}
-.jn-ed textarea{min-height:70px;resize:vertical}
-.jn-intake{margin-top:10px;background:var(--soft);border-radius:10px;padding:9px 11px;font-size:12.5px;color:#4b5563;line-height:1.6}
-.jn-pills{display:flex;flex-wrap:wrap;gap:6px}
-.jn-pills button{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:13px;color:#4b5563}
-.jn-pills button.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:800}
-.jn-pain button{min-width:34px;padding:6px 0}
-.jn-hw{display:flex;gap:8px;align-items:center;margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff7ed;font-size:13.5px}
-.jn-hw.done{background:var(--blue-t)}
-.jn-hw input{width:18px;height:18px}
-.jn-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.jn-md{white-space:pre-wrap;font-size:12px;background:var(--soft);border-radius:10px;padding:10px;max-height:320px;overflow:auto;margin-top:10px}
-.mp-sel{display:grid;gap:6px}
-.mp-it{display:flex;gap:6px;align-items:center;background:var(--soft);border-radius:10px;padding:6px 8px}
-.mp-it .mp-n{font-weight:700;font-size:13.5px;flex:1 1 auto;min-width:0}
-.mp-it input.mp-d{width:120px !important;flex:none;padding:5px 8px !important;font-size:12.5px !important}
-.mp-it button{border:0;background:none;color:var(--red);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
-.mp-in{position:relative;margin-top:8px}
-.mp-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.mp-sug button,.mp-chips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;cursor:pointer;font-family:inherit;font-size:12.5px;color:var(--ink)}
-.mp-sug button:first-child{border-color:var(--blue);color:var(--blue-d)}
-.mp-sug button b,.mp-chips button b{color:var(--blue-d)}
-.mp-areas{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
-.mp-areas button{border:0;background:none;padding:4px 8px;font-family:inherit;font-size:12.5px;color:var(--sub);cursor:pointer;border-radius:999px}
-.mp-areas button.on{background:var(--ink);color:#fff;font-weight:700}
-.mp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;max-height:150px;overflow:auto}
-.mv-grp{font-size:12.5px;margin-top:6px;line-height:1.6}
-.mv-grp b{color:var(--ink)}
 .bk .hd .histBtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--blue-d);cursor:pointer;vertical-align:middle;margin:0 4px}
 .hist .pass{padding:9px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
 .mini{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;margin-top:6px;font-family:inherit}
@@ -549,23 +493,6 @@ select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-r
       <button class="btn-sub hide" id="adminLogout" style="margin-top:6px;margin-left:10px">로그아웃</button>
     </div>
     <div id="adminBody" class="hide">
-    <div class="box" id="jnBox">
-      <div class="row" style="justify-content:space-between"><b>수업일지</b><a id="jnFolder" class="btn-sub hide" target="_blank" rel="noopener" style="margin:0">드라이브 일지 폴더 열기</a></div>
-      <div class="note" style="margin-top:2px">예약이 들어오면 날짜·회원 정보·회차가 채워진 일지(MD)가 자동으로 만들어져요. 수업 전에는 컨디션·통증을, 끝난 뒤에는 진행한 동작·전후 반응·다음 계획·숙제 동작을 적어 주세요. 숙제는 그날 밤 22시까지 보내고 체크해요.</div>
-      <div id="jnPending"></div>
-      <div class="jn-date"><button class="btn" id="jnPrev" aria-label="전날">‹</button><input type="date" id="jnDate" aria-label="일지 날짜"><button class="btn" id="jnNext" aria-label="다음날">›</button><button class="btn" id="jnToday">오늘</button></div>
-      <div class="jn-list" id="jnList"></div>
-      <div id="jnEditor"></div>
-      <div class="status" id="jnStatus"></div>
-    </div>
-    <div class="box" id="mvBox">
-      <b>스트레칭 동작 목록 (일지 빠른 입력용)</b>
-      <div class="note" style="margin-top:2px">동작 목록을 MD 파일로 만들어 올리면, 일지에서 코드나 이름 몇 글자만 치고 Enter로 넣을 수 있어요. 형식: <b>## 부위</b> 아래에 <b>- [코드] 동작 이름 | 기본 처방</b> (코드·처방은 빼도 돼요). 파일을 고친 뒤 다시 올리면 목록이 통째로 바뀌어요.</div>
-      <div class="row" style="margin-top:10px"><label class="btn" for="mvFile" style="cursor:pointer">MD 파일 고르기</label><input type="file" id="mvFile" accept=".md,.markdown,.txt,text/markdown,text/plain" class="hide"><button class="btn" id="mvSample">예시 형식 내려받기</button></div>
-      <div id="mvPreview"></div>
-      <div id="mvList"></div>
-      <div class="status" id="mvStatus"></div>
-    </div>
     <div class="box">
       <div class="row" style="justify-content:space-between"><b>① 예약 관리 (변경·확정·취소)</b>
         <label style="font-size:13px;color:var(--sub)"><input type="checkbox" id="showPast"> 지난·취소 예약도 보기</label></div>
@@ -671,9 +598,6 @@ const CONFIG = {
   // 당일 예약은 받지 않음 (내일부터 예약 가능). 아래 문구가 이용권·날짜 화면에 표시됩니다.
   sameDayNotice: '당일 예약은 온라인으로 받지 않아요. 당일 예약은 이솔 원장님께 따로 연락주시기 바랍니다.',
   payNote: '예약은 바로 확정돼요. 결제는 코치가 사전 질문을 확인한 뒤 기존 결제 방법으로 안내드립니다.',
-  // 회사(유리스마스쿨) 결제 페이지 주소. 비워 두면 [결제하기] 버튼이 '연결 예정'으로 보이고 눌리지 않아요.
-  payUrl: '',
-  payLabel: '결제하기',
   categories: [
     { id:'adult', label:'일반 · 성인', minutes:50, items:[
       { id:'a-welcome', name:'웰컴 처방 스트레칭', desc:'첫 방문 1회 체험', price:100000, tag:'첫 방문' },
@@ -738,7 +662,6 @@ const Store = {
       const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action, key, ...extra }) });
       return r.json();
     }
-    if (['journals','journalSave','moves','setMoves'].includes(action)) return previewJournal(action, extra);
     const all = lsGet(LS.bookings, []);
     if (action==='list') return { ok:true, rows: all };
     const me = all.find(x => x.id===extra.id); if (!me) return { ok:false, error:'notfound' };
@@ -1135,12 +1058,6 @@ function visitGuide(date, hour, minutes){
     <p>원활한 진행을 위해 5분 전까지 도착해 주시면 감사하겠습니다.<br>편한 복장으로 오시고, 불편하신 부위가 있으면 미리 말씀해 주세요.<br>'일정 변경'이 필요하시면 예약 24시간 전까지 연락 부탁드립니다.</p>
     <p>궁금하신 점은 <a href="tel:${tel.replace(/\D/g,'')}">${esc(tel)}</a>로 연락 주세요.</p></div>`;
 }
-/* 결제 버튼: 결제는 회사 결제 페이지에서 한다. 이 페이지는 연결만 한다(주소는 CONFIG.payUrl). */
-function payButton(){
-  const u = String(CONFIG.payUrl || '').trim();
-  if (/^https:\/\//.test(u)) return `<a class="btn-main pay" href="${esc(u)}" target="_blank" rel="noopener">${esc(CONFIG.payLabel || '결제하기')}</a>`;
-  return `<button class="btn-main pay" type="button" disabled>${esc(CONFIG.payLabel || '결제하기')}</button><div class="pay-wait">결제 페이지는 연결 준비 중이에요. 원장님이 결제 방법을 안내드려요.</div>`;
-}
 function showDone(p, id, contractId, member){
   $('#bookView').classList.add('hide'); $('#bar').classList.add('hide'); $('#backBtn').classList.add('hide'); $('#foot').classList.add('hide');
   $('#topTitle').textContent='예약 완료';
@@ -1153,7 +1070,7 @@ function showDone(p, id, contractId, member){
       <div class="row"><span>이용권</span><span>${esc(p.category)} · ${esc(p.itemName)}</span></div>
       <div class="row"><span>예약자</span><span>${esc(p.name)} · ${fmtPhone(p.phone)}</span></div>
       <div class="row total"><span>이용 금액</span><span>${won(p.price)}</span></div>
-    </div><div class="pay-note" style="text-align:left">${esc(CONFIG.payNote.replace(/^예약은 바로 확정돼요\.\s*/, ''))}</div>${payButton()}${member ? `<div class="pay-note" style="text-align:left">${member.isNew ? '회원으로 등록됐어요.' : '회원 정보에 이용권을 더했어요.'} ${esc(member.item)} · 남은 횟수 ${Math.max(0, member.remaining)}회<br>다음 예약은 [기존 회원 예약]에서 이름·연락처로 바로 할 수 있어요.</div><button class="btn-main" id="goMember">회원 예약 화면으로 가기</button>` : ''}${contractId ? `<div class="pay-note" style="text-align:left">약정서가 접수됐어요 (약정번호 ${esc(contractId)}). 아래 버튼으로 PDF로 저장해 보관하세요.</div><button class="btn-main" id="savePdf">약정서 PDF로 저장</button>` : ''}<a href="${location.pathname}">처음으로</a></div>`;
+    </div><div class="pay-note" style="text-align:left">${esc(CONFIG.payNote.replace(/^예약은 바로 확정돼요\.\s*/, ''))}</div>${member ? `<div class="pay-note" style="text-align:left">${member.isNew ? '회원으로 등록됐어요.' : '회원 정보에 이용권을 더했어요.'} ${esc(member.item)} · 남은 횟수 ${Math.max(0, member.remaining)}회<br>다음 예약은 [기존 회원 예약]에서 이름·연락처로 바로 할 수 있어요.</div><button class="btn-main" id="goMember">회원 예약 화면으로 가기</button>` : ''}${contractId ? `<div class="pay-note" style="text-align:left">약정서가 접수됐어요 (약정번호 ${esc(contractId)}). 아래 버튼으로 PDF로 저장해 보관하세요.</div><button class="btn-main" id="savePdf">약정서 PDF로 저장</button>` : ''}<a href="${location.pathname}">처음으로</a></div>`;
   if (contractId) $('#savePdf').onclick = () => printContract(lastContract, contractId);
   if (member) $('#goMember').onclick = () => { sessionStorage.setItem('yu_member_prefill', JSON.stringify({ name:p.name, phone:p.phone })); location.href = location.pathname + '?member'; };
   window.scrollTo(0,0);
@@ -1218,7 +1135,6 @@ async function showAdmin(){
     const r = await Store.admin('list', key).catch(e => ({ ok:false, error:e.message }));
     if (!r.ok){ rowsCache=[]; $('#bookingList').innerHTML=''; setUnlocked(false); $('#keyStatus').textContent = key ? errText(r.error) : ''; if (r.error!=='network') sessionStorage.removeItem('yu_admin_key'); return; }
     setUnlocked(true); $('#keyStatus').textContent = '확인됐어요.';
-    if (!window.jnStarted) { window.jnStarted = true; journalAdmin(() => key, errText); }
     rowsCache = r.rows || []; setSms(!!r.smsAuto); renderBookings(); drawMembers(); if (!customCache.length) drawCustom();
   };
   /* 기간 보기 + 10개씩 더보기 */
@@ -1233,6 +1149,16 @@ async function showAdmin(){
   $('#pApply').onclick = () => { const f = $('#pFrom').value, t = $('#pTo').value;
     if (f && t && f > t) return $('#pInfo').textContent = '시작일이 종료일보다 늦어요.'; setPeriod(f, t, ''); };
   $('#bookMore').onclick = () => { shown += PAGE; renderBookings(); };
+  // 사전 질문(성별·연령·불편 부위·통증·이력): 신규 예약은 그 예약의 답, 회원 예약은 같은 회원의 가장 최근 사전 질문을 보여 준다
+  const intakeHtml = x => {
+    const has = r => r && r.category !== '회원' && (r.area || r.gender || r.age);
+    let src = has(x) ? x : null, from = '';
+    if (!src && x.memberId) { src = rowsCache.filter(r => r.memberId === x.memberId && has(r) && (r.date + hm(r.hour)) <= (x.date + hm(x.hour))).sort((a, b) => (a.date + hm(a.hour)).localeCompare(b.date + hm(b.hour))).pop()
+        || rowsCache.filter(r => r.memberId === x.memberId && has(r)).pop();
+      if (src) { const d = new Date(src.date + 'T00:00:00'); from = ` <span style="color:var(--sub)">(${d.getMonth()+1}/${d.getDate()} 예약 때 답변)</span>`; } }
+    if (!src) return '';
+    return ` · ${esc(src.gender||'')} ${esc(src.age||'')}<br>불편: ${esc(src.area||'-')} · 통증 ${esc(src.pain)}/10 · 이력: ${esc([].concat(src.med||[]).join(', ')||'-')}${src.medDetail?` (${esc(src.medDetail)})`:''}${from}`;
+  };
   const renderBookings = () => {
     const today=ymd(new Date()), all=$('#showPast').checked;
     const from = period.from || (all || period.key==='all' ? '' : today), to = period.to;
@@ -1243,9 +1169,8 @@ async function showAdmin(){
     $('#bookMore').textContent = `더보기 (${Math.min(PAGE, rows.length-shown)}건 더 · 남은 ${rows.length-shown}건)`;
     $('#bookingList').innerHTML = rows.length ? rows.slice(0, shown).map(x => { const dt=new Date(x.date+'T00:00:00');
       return `<div class="bk ${x.status==='취소'?'cx':''}" data-id="${esc(x.id)}">
-        <div class="hd"><span class="st s-${esc(x.status)}">${esc(x.status)}</span>${dt.getMonth()+1}/${dt.getDate()} (${WEEK[dt.getDay()]}) ${hm(x.hour)} · ${esc(x.name)}${x.memberId?'<span class="tag mem">회원</span>':'<span class="tag">신규</span>'}</div>
-        <div class="meta">${esc(x.itemName||'')} · <a href="tel:${esc(x.phone)}">${esc(fmtPhone(String(x.phone||'')))}</a>${x.region?` · ${esc(x.region)}${x.school?', '+esc(x.school):''}`:''}${x.cal?' · <span style="color:var(--sub)">캘린더 등록됨</span>':''}${x.memberId?'':` · ${esc(x.gender||'')} ${esc(x.age||'')}<br>
-          불편: ${esc(x.area||'-')} · 통증 ${esc(x.pain)}/10 · 이력: ${esc([].concat(x.med||[]).join(', ')||'-')}${x.medDetail?` (${esc(x.medDetail)})`:''}`}
+        <div class="hd"><span class="st s-${esc(x.status)}">${esc(x.status)}</span>${dt.getMonth()+1}/${dt.getDate()} (${WEEK[dt.getDay()]}) ${hm(x.hour)} · ${esc(x.name)}${x.category==='회원'?'<span class="tag mem">회원</span>':'<span class="tag">신규</span>'}</div>
+        <div class="meta">${esc(x.itemName||'')} · <a href="tel:${esc(x.phone)}">${esc(fmtPhone(String(x.phone||'')))}</a>${x.region?` · ${esc(x.region)}${x.school?', '+esc(x.school):''}`:''}${x.cal?' · <span style="color:var(--sub)">캘린더 등록됨</span>':''}${intakeHtml(x)}
           ${x.memo?`<br>요청: ${esc(x.memo)}`:''}${x.calMemo?`<br><b>메모:</b> ${esc(x.calMemo).replace(/\n/g,'<br>')}`:''}${x.note?`<br><span style="color:var(--sub)">기록: ${esc(x.note)}</span>`:''}</div>
         ${x.status==='취소'?'':`<div class="acts">${x.status==='신청'?'<button class="ok" data-a="confirm">확정</button>':''}<button data-a="edit">시간 변경</button>${x.status==='확정'?'<button data-a="noshow">노쇼</button>':''}<button data-a="memo">${x.calMemo?'메모 수정':'메모'}</button><button class="no" data-a="cancel">예약 취소</button></div>`}
         ${editing===x.id?changePanel(x):''}${memoEdit===x.id?memoPanel(x):''}
@@ -1488,260 +1413,6 @@ async function showAdmin(){
   drawWeek(); drawDate(); drawPrices(); drawBookings();
 }
 
-/* =========================================================
-   수업일지 (관리자)
-   - 서버(apps-script.gs)가 예약마다 일지와 드라이브 MD 파일을 만든다. 이 화면은 읽고·적고·내려받는다.
-   - jnMd()는 서버 journalMd_()와 같은 내용을 만든다(한쪽을 고치면 다른 쪽도 같이 고친다).
-   ========================================================= */
-const JN_DUE_HOUR = 22;
-const JN_CONDS = ['좋음', '보통', '피곤함', '나쁨'];
-function jnStatus(j){
-  if (j.bstatus==='취소' || j.bstatus==='노쇼') return j.bstatus;
-  if (j.moves.length || j.resp || j.plan || j.hw.length) return j.hw.length && !j.hwSent ? '숙제 발송 전' : '완료';
-  if (j.cond || String(j.pain) !== '' || j.painArea) return '수업 전 입력';
-  return '작성 전';
-}
-function jnMaskPhone(p){ p = String(p||'').replace(/\D/g,''); return p.length >= 10 ? p.slice(0,3) + '-****-' + p.slice(-4) : ''; }
-function jnFileName(j){ return `${j.date}-${String(j.time).slice(0,2)}시-${String(j.name||'').replace(/[\\/:*?"<>|\s]+/g,'')}-수업일지${j.bstatus==='취소'?'-취소':''}.md`; }
-function jnMd(j){
-  const it = j.intake || {}, q = s => '"' + String(s ?? '').replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
-  const dow = WEEK[new Date(j.date + 'T12:00:00Z').getUTCDay()];
-  const item = x => '- ' + String(x).replace(/\s*\|\s*/, ' · ');
-  const block = t => String(t||'').trim() ? String(t).trim().split('\n').map(x => x.trim() ? (/^[-*]\s/.test(x.trim()) ? x.trim() : '- ' + x.trim()) : '').join('\n') : '- ';
-  const L = ['---', 'title: ' + q(j.date + ' ' + j.name + ' 수업일지'), 'tags:', '  - 수업일지', '  - 유리스마스트레칭', 'date: ' + j.date,
-    'member: ' + q(j.name), 'member_id: ' + q(j.member), 'booking_id: ' + q(j.booking), 'item: ' + q(j.item), 'session: ' + q(j.session),
-    'status: ' + q(jnStatus(j)), 'homework_due: ' + q(j.date + ' ' + JN_DUE_HOUR + ':00'), 'homework_sent: ' + (j.hwSent ? 'true' : 'false'), '---', '',
-    '# ' + j.date + '(' + dow + ') ' + j.time + ' ' + j.name + ' 수업일지', '', '## 기본 정보',
-    '- 날짜: ' + j.date + '(' + dow + ') ' + j.time,
-    '- 회원: ' + j.name + (j.phone ? ' · ' + jnMaskPhone(j.phone) : '') + (it.region ? ' · ' + it.region + (it.school ? ', ' + it.school : '') : ''),
-    '- 이용권: ' + (j.item || '-'),
-    '- 회차: ' + (j.session || '-') + (j.nth ? ' (누적 ' + j.nth + '회째)' : '')];
-  if (j.bstatus==='취소' || j.bstatus==='노쇼') L.push('- 예약 상태: ' + j.bstatus);
-  if (it.area || it.med || it.memo || it.calMemo) {
-    L.push('', '## 예약 때 받은 정보');
-    if (it.area) L.push('- 불편 부위: ' + it.area + (String(it.pain ?? '') !== '' ? ' · 통증 ' + it.pain + '/10' : ''));
-    if (it.med) L.push('- 진료·수술·질환 이력: ' + it.med + (it.medDetail ? ' (' + it.medDetail + ')' : ''));
-    if (it.memo) L.push('- 요청사항: ' + it.memo);
-    if (it.calMemo) L.push('- 관리자 메모: ' + String(it.calMemo).replace(/\n/g, ' / '));
-  }
-  L.push('', '## 수업 전', '- 컨디션: ' + (j.cond || ''), '- 통증(0~10): ' + (String(j.pain) !== '' ? j.pain + '/10' : ''), '- 통증 부위: ' + (j.painArea || ''),
-    '', '## 진행한 동작', j.moves.length ? j.moves.map(item).join('\n') : '- ',
-    '', '## 전후 반응', block(j.resp), '', '## 다음 수업 계획', block(j.plan),
-    '', '## 숙제 동작', j.hw.length ? j.hw.map(item).join('\n') : '- ',
-    '', '- [' + (j.hwSent ? 'x' : ' ') + '] 숙제 영상·동작 보냄 (기한 ' + j.date + ' ' + JN_DUE_HOUR + ':00' + (j.hwAt ? ' · 보낸 시각 ' + j.hwAt : '') + ')', '');
-  return L.join('\n');
-}
-/* 동작 목록 MD 읽기: "## 부위" 아래 "- [코드] 이름 | 기본 처방". 프론트매터·# 제목·일반 문단은 건너뛴다. */
-function parseMovesMd(text){
-  const out = [], lines = String(text||'').replace(/^\uFEFF/, '').replace(/\r/g,'').split('\n'); let area = '', fm = false;
-  lines.forEach((ln, i) => { const t = ln.trim();
-    if (i===0 && t==='---'){ fm = true; return; } if (fm){ if (t==='---') fm = false; return; }
-    const h = t.match(/^#{2,4}\s+(.+)$/); if (h){ area = h[1].replace(/[*_`]/g,'').trim(); return; }
-    const m = t.match(/^(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?(.+)$/); if (!m) return;
-    let body = m[1].trim(), code = ''; const c = body.match(/^\[([^\]]{1,20})\]\s*(.+)$/); if (c){ code = c[1].trim(); body = c[2].trim(); }
-    const parts = body.split('|').map(s => s.trim()), name = parts[0].replace(/[*_`]/g,'').trim(); if (!name) return;
-    out.push({ area, code, name, dose: parts.slice(1).filter(String).join(' | ') });
-  });
-  return out;
-}
-const MOVES_SAMPLE = `---
-title: "스트레칭 동작 목록"
-tags:
-  - 스트레칭
-  - 동작목록
-date: ${ymd(new Date())}
----
-
-# 스트레칭 동작 목록
-
-형식: "## 부위" 아래에 "- [코드] 동작 이름 | 기본 처방". 코드와 처방은 빼도 돼요.
-아래 동작은 형식 예시예요. 원장님 동작 이름으로 바꿔 주세요.
-
-## 목·어깨
-- [상승] 상부 승모근 스트레칭 | 30초×2
-- [견갑] 견갑거근 스트레칭 | 30초×2
-
-## 등·허리
-- [고양] 고양이-소 자세 | 10회
-
-## 고관절
-- [장요] 장요근 스트레칭 | 좌우 30초
-- [9090] 90/90 고관절 회전
-
-## 다리
-- [햄] 햄스트링 스트레칭 | 30초×2
-`;
-function downloadText(name, text){
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type:'text/markdown;charset=utf-8' })); a.download = name;
-  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-}
-/* 동작 빠른 입력: 코드 또는 이름 일부 + Enter, 부위 탭의 칩을 눌러도 들어간다. items는 '이름 | 처방' 문자열 배열. */
-function movePicker(host, items, getMoves, onChange, ph){
-  let area = '전체';
-  host.innerHTML = `<div class="mp-sel"></div><div class="mp-in"><input type="text" class="mp-q" autocomplete="off" placeholder="${esc(ph || '동작 코드나 이름 입력 후 Enter')}"><div class="mp-sug"></div></div><div class="mp-areas"></div><div class="mp-chips"></div>`;
-  const sel = host.querySelector('.mp-sel'), qIn = host.querySelector('.mp-q'), sug = host.querySelector('.mp-sug'), areasEl = host.querySelector('.mp-areas'), chips = host.querySelector('.mp-chips');
-  const split = s => { const p = String(s).split('|'); return { n: p[0].trim(), d: p.slice(1).join('|').trim() }; };
-  const drawSel = () => { sel.innerHTML = items.length ? items.map((s, i) => { const x = split(s);
-      return `<div class="mp-it"><span class="mp-n">${esc(x.n)}</span><input type="text" class="mp-d" data-i="${i}" value="${esc(x.d)}" placeholder="처방 (예: 30초×2)" aria-label="${esc(x.n)} 처방"><button type="button" data-x="${i}" aria-label="${esc(x.n)} 빼기">×</button></div>`; }).join('')
-      : '<div class="note" style="margin:0">아직 없어요.</div>'; };
-  const match = q => { q = q.trim().toLowerCase(); if (!q) return []; const ms = getMoves();
-    const exact = ms.filter(m => m.code && m.code.toLowerCase() === q), rest = ms.filter(m => !exact.includes(m) && ((m.code||'').toLowerCase().includes(q) || m.name.toLowerCase().includes(q)));
-    return exact.concat(rest).slice(0, 8); };
-  const drawSug = () => { const ms = match(qIn.value); sug.innerHTML = ms.map(m => `<button type="button" data-m="${getMoves().indexOf(m)}">${m.code ? `<b>${esc(m.code)}</b> ` : ''}${esc(m.name)}</button>`).join(''); };
-  const drawChips = () => { const ms = getMoves(); if (!ms.length){ areasEl.innerHTML = ''; chips.innerHTML = ''; return; }
-    const areas = ['전체', ...new Set(ms.map(m => m.area || '기타'))]; if (!areas.includes(area)) area = '전체';
-    areasEl.innerHTML = areas.map(a => `<button type="button" data-a="${esc(a)}" class="${a===area?'on':''}">${esc(a)}</button>`).join('');
-    chips.innerHTML = ms.map((m, k) => (area==='전체' || (m.area||'기타')===area) ? `<button type="button" data-m="${k}">${m.code ? `<b>${esc(m.code)}</b> ` : ''}${esc(m.name)}</button>` : '').join(''); };
-  const add = m => { items.push(m.name + (m.dose ? ' | ' + m.dose : '')); drawSel(); onChange(); };
-  qIn.addEventListener('input', drawSug);
-  qIn.addEventListener('keydown', e => { if (e.key !== 'Enter' || e.isComposing) return; e.preventDefault(); const v = qIn.value.trim(); if (!v) return;
-    const m = match(v)[0]; add(m || { name: v.replace(/\|/g, '/'), dose: '' }); qIn.value = ''; drawSug(); });
-  host.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !host.contains(b)) return;
-    if (b.dataset.x !== undefined){ items.splice(Number(b.dataset.x), 1); drawSel(); onChange(); return; }
-    if (b.dataset.a !== undefined){ area = b.dataset.a; drawChips(); return; }
-    if (b.dataset.m !== undefined){ const m = getMoves()[Number(b.dataset.m)]; if (m){ add(m); if (b.closest('.mp-sug')){ qIn.value = ''; drawSug(); qIn.focus(); } } } });
-  sel.addEventListener('input', e => { const i = e.target.dataset.i; if (i === undefined) return; const x = split(items[i]); const d = e.target.value.replace(/\|/g, '/').trim();
-    items[i] = x.n + (d ? ' | ' + d : ''); onChange(); });
-  drawSel(); drawChips();
-  return { refresh(){ drawChips(); drawSug(); } };
-}
-function journalAdmin(getKey, errText){
-  let date = ymd(new Date()), rows = [], pending = [], moves = [], cur = null, dirty = false, pickers = [];
-  const st = t => $('#jnStatus').textContent = t;
-  const call = (a, x) => Store.admin(a, getKey(), x || {}).catch(e => ({ ok:false, error:'network', message:e.message }));
-  const fmtD = s => { const d = new Date(s + 'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}(${WEEK[d.getDay()]})`; };
-  const dueLeft = j => { const ms = new Date(j.date + 'T' + pad(JN_DUE_HOUR) + ':00:00+09:00').getTime() - Date.now();
-    if (ms < 0) return '<span class="jn-late">기한 지남</span>'; const h = Math.floor(ms/3600000), m = Math.floor(ms%3600000/60000);
-    return `<span class="jn-left">${h ? h + '시간 ' : ''}${m}분 남음</span>`; };
-  const load = async (msg) => {
-    st('불러오는 중…'); $('#jnDate').value = date;
-    const r = await call('journals', { from:date, to:date });
-    if (!r.ok){ st(r.message || errText(r.error)); return; }
-    rows = r.rows || []; pending = r.pending || [];
-    if (r.folderUrl){ $('#jnFolder').href = r.folderUrl; $('#jnFolder').classList.remove('hide'); }
-    st(msg || (r.made ? `일지 ${r.made}건을 새로 만들었어요.` : ''));
-    drawPending(); drawList();
-    if (cur){ const c = rows.find(x => x.id === cur.id); if (!c){ cur = null; dirty = false; $('#jnEditor').innerHTML = ''; } else if (!dirty){ cur = c; drawEditor(); } }
-  };
-  const drawPending = () => {
-    $('#jnPending').innerHTML = pending.length ? `<div class="jn-pend"><b class="t">숙제 보내기 남음 ${pending.length}건 (그날 ${JN_DUE_HOUR}시까지)</b>${pending.map(p =>
-      `<div class="p"><span>${fmtD(p.date)} ${esc(p.time)} <b>${esc(p.name)}</b> · ${esc(p.hw.map(x => x.split('|')[0].trim()).join(', '))}<br>${dueLeft(p)}</span><button type="button" data-sent="${esc(p.id)}">보냄 체크</button></div>`).join('')}</div>` : '';
-  };
-  const drawList = () => {
-    $('#jnList').innerHTML = rows.length ? rows.map(j => { const w = jnStatus(j);
-      return `<button type="button" class="jn-row ${cur && cur.id===j.id ? 'on' : ''}" data-id="${esc(j.id)}"><span class="tm">${esc(j.time)}</span><span>${esc(j.name)}</span><span class="jw w-${esc(w.replace(/\s/g,''))}">${esc(w)}</span><span class="ses">${esc(j.session || '')}</span></button>`; }).join('')
-      : '<div class="note" style="margin-top:0">이 날짜에는 수업이 없어요.</div>';
-  };
-  const drawEditor = () => {
-    const j = cur, it = j.intake || {}, w = jnStatus(j); pickers = [];
-    const intake = [it.area ? `불편 부위 ${esc(it.area)}${String(it.pain ?? '') !== '' ? ` · 통증 ${esc(it.pain)}/10` : ''}` : '', it.med ? `이력 ${esc(it.med)}${it.medDetail ? ` (${esc(it.medDetail)})` : ''}` : '',
-      it.memo ? `요청 ${esc(it.memo)}` : '', it.calMemo ? `메모 ${esc(it.calMemo)}` : ''].filter(String);
-    $('#jnEditor').innerHTML = `<div class="jn-ed">
-      <h4>${fmtD(j.date)} ${esc(j.time)} · ${esc(j.name)}</h4>
-      <div class="sub">${esc(j.item || '-')} · ${esc(j.session || '-')}${j.nth ? ` (누적 ${esc(j.nth)}회째)` : ''} · <span class="jw w-${esc(w.replace(/\s/g,''))}" id="jnW">${esc(w)}</span></div>
-      ${intake.length ? `<div class="jn-intake"><b>예약 때 받은 정보</b><br>${intake.join('<br>')}</div>` : ''}
-      <div class="jn-sec"><b>수업 전</b>
-        <label class="l">컨디션</label><div class="jn-pills" id="jnCondP">${JN_CONDS.map(c => `<button type="button" data-c="${c}" class="${j.cond===c?'on':''}">${c}</button>`).join('')}</div>
-        <input type="text" id="jnCond" maxlength="100" value="${esc(j.cond)}" placeholder="직접 적기 (예: 수면 5시간, 어제 등산)" style="margin-top:6px">
-        <label class="l">통증 (0~10)</label><div class="jn-pills jn-pain" id="jnPainP">${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<button type="button" data-p="${n}" class="${String(j.pain)===String(n)?'on':''}">${n}</button>`).join('')}</div>
-        <label class="l" for="jnPainArea">통증 부위</label><input type="text" id="jnPainArea" maxlength="100" value="${esc(j.painArea)}" placeholder="예: 오른쪽 어깨 앞쪽, 허리 아래"></div>
-      <div class="jn-sec"><b>수업 후</b>
-        <label class="l">진행한 동작</label><div id="jnMoves"></div>
-        <label class="l" for="jnResp">전후 반응</label><textarea id="jnResp" maxlength="3000" placeholder="예: 전굴 손끝-바닥 -12cm → -6cm / 목 오른쪽 회전 당김 줄어듦">${esc(j.resp)}</textarea>
-        <label class="l" for="jnPlan">다음 수업 계획</label><textarea id="jnPlan" maxlength="3000" placeholder="예: 고관절 가동성 이어서, 흉추 회전 추가">${esc(j.plan)}</textarea>
-        <label class="l">숙제 동작</label><div id="jnHw"></div>
-        <label class="jn-hw ${j.hwSent?'done':''}" id="jnHwBox"><input type="checkbox" id="jnHwSent" ${j.hwSent?'checked':''}><span>숙제 영상·동작 보냄 <span class="sub">(기한 ${fmtD(j.date)} ${JN_DUE_HOUR}:00${j.hwAt ? ` · 보낸 시각 ${esc(j.hwAt)}` : ''})</span></span></label></div>
-      <div class="jn-acts"><button class="btn pri" id="jnSave" type="button">저장</button><button class="btn" id="jnDown" type="button">MD 내려받기</button><button class="btn" id="jnView" type="button">MD 미리보기</button>${j.fileUrl ? `<a class="btn" href="${esc(j.fileUrl)}" target="_blank" rel="noopener" style="text-decoration:none">드라이브 파일</a>` : ''}<button class="btn" id="jnClose" type="button">닫기</button></div>
-      <pre class="jn-md hide" id="jnMdView"></pre></div>`;
-    cur.moves = [...j.moves]; cur.hw = [...j.hw];
-    pickers.push(movePicker($('#jnMoves'), cur.moves, () => moves, mark, '진행한 동작 코드나 이름 + Enter'));
-    pickers.push(movePicker($('#jnHw'), cur.hw, () => moves, mark, '숙제 동작 코드나 이름 + Enter'));
-  };
-  const collect = () => ({ id: cur.id, cond: $('#jnCond').value.trim(), pain: ($('#jnPainP .on') || {}).dataset?.p ?? '', painArea: $('#jnPainArea').value.trim(),
-    moves: cur.moves, resp: $('#jnResp').value, plan: $('#jnPlan').value, hw: cur.hw, hwSent: $('#jnHwSent').checked });
-  const merged = () => Object.assign({}, cur, collect(), { pain: ($('#jnPainP .on') || {}).dataset?.p ?? '' });
-  const mark = () => { dirty = true; const w = jnStatus(merged()); const el = $('#jnW'); if (el){ el.textContent = w + ' · 저장 전'; el.className = 'jw w-' + w.replace(/\s/g,''); }
-    const v = $('#jnMdView'); if (v && !v.classList.contains('hide')) v.textContent = jnMd(merged()); };
-  const save = async (quiet) => {
-    if (!cur) return; const data = collect(); $('#jnSave').disabled = true; st('저장 중…');
-    const r = await call('journalSave', { journal: data }); $('#jnSave').disabled = false;
-    if (!r.ok) return st('저장하지 못했어요: ' + (r.message || errText(r.error)));
-    dirty = false; cur = r.journal; const i = rows.findIndex(x => x.id === cur.id); if (i >= 0) rows[i] = cur;
-    await load(quiet || `${cur.name}님 일지를 저장했어요. ${API ? '드라이브 MD 파일에도 반영했어요.' : '(미리보기: 이 브라우저에만 저장)'}`);
-  };
-  $('#jnEditor').addEventListener('input', e => { if (e.target.closest('.mp-in')) return; if (e.target.id !== 'jnHwSent') mark(); });
-  $('#jnEditor').addEventListener('change', e => { if (e.target.id === 'jnHwSent'){ $('#jnHwBox').classList.toggle('done', e.target.checked); mark(); save(e.target.checked ? `${cur.name}님 숙제 보냄으로 체크했어요.` : `${cur.name}님 숙제 보냄 체크를 풀었어요.`); } });
-  $('#jnEditor').addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); save(); } });
-  $('#jnEditor').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.c !== undefined){ const on = b.classList.contains('on'); document.querySelectorAll('#jnCondP button').forEach(x => x.classList.remove('on'));
-      if (!on){ b.classList.add('on'); $('#jnCond').value = b.dataset.c; } else $('#jnCond').value = ''; mark(); return; }
-    if (b.dataset.p !== undefined){ const on = b.classList.contains('on'); document.querySelectorAll('#jnPainP button').forEach(x => x.classList.remove('on')); if (!on) b.classList.add('on'); mark(); return; }
-    if (b.id === 'jnSave') return save();
-    if (b.id === 'jnDown') return downloadText(jnFileName(merged()), jnMd(merged()));
-    if (b.id === 'jnView'){ const v = $('#jnMdView'); v.classList.toggle('hide'); v.textContent = jnMd(merged()); b.textContent = v.classList.contains('hide') ? 'MD 미리보기' : '미리보기 닫기'; return; }
-    if (b.id === 'jnClose'){ if (dirty && !confirm('저장하지 않은 내용이 있어요. 닫을까요?')) return; cur = null; dirty = false; $('#jnEditor').innerHTML = ''; drawList(); }
-  });
-  $('#jnList').onclick = e => { const b = e.target.closest('.jn-row'); if (!b) return;
-    if (dirty && cur && cur.id !== b.dataset.id && !confirm('저장하지 않은 내용이 있어요. 다른 일지를 열까요?')) return;
-    cur = JSON.parse(JSON.stringify(rows.find(x => x.id === b.dataset.id))); dirty = false; drawList(); drawEditor(); $('#jnEditor').scrollIntoView({ behavior:'smooth', block:'start' }); };
-  $('#jnPending').onclick = async e => { const id = e.target.dataset.sent; if (!id) return; e.target.disabled = true;
-    const r = await call('journalSave', { journal: { id, hwSent: true } });
-    if (!r.ok){ e.target.disabled = false; return st('저장하지 못했어요: ' + (r.message || errText(r.error))); }
-    if (cur && cur.id === id && !dirty) cur = r.journal; load(`${r.journal.name}님 숙제 보냄으로 체크했어요.`); };
-  const go = d => { if (dirty && !confirm('저장하지 않은 내용이 있어요. 날짜를 바꿀까요?')){ $('#jnDate').value = date; return; } dirty = false; cur = null; $('#jnEditor').innerHTML = ''; date = d; load(); };
-  $('#jnDate').onchange = () => $('#jnDate').value && go($('#jnDate').value);
-  $('#jnPrev').onclick = () => { const d = new Date(date + 'T00:00:00'); d.setDate(d.getDate() - 1); go(ymd(d)); };
-  $('#jnNext').onclick = () => { const d = new Date(date + 'T00:00:00'); d.setDate(d.getDate() + 1); go(ymd(d)); };
-  $('#jnToday').onclick = () => go(ymd(new Date()));
-  /* 동작 목록 */
-  let parsed = null;
-  const drawMoves = () => {
-    const g = {}; moves.forEach(m => (g[m.area || '기타'] = g[m.area || '기타'] || []).push(m));
-    $('#mvList').innerHTML = moves.length ? `<div class="note">저장된 동작 ${moves.length}개</div>` + Object.keys(g).map(a => `<div class="mv-grp"><b>${esc(a)}</b> · ${g[a].map(m => (m.code ? `[${esc(m.code)}] ` : '') + esc(m.name)).join(', ')}</div>`).join('')
-      : '<div class="note">아직 저장된 동작이 없어요. 동작 목록 없이도 이름을 직접 적고 Enter로 넣을 수 있어요.</div>';
-    pickers.forEach(p => p.refresh());
-  };
-  $('#mvSample').onclick = () => downloadText('스트레칭-동작-목록-예시.md', MOVES_SAMPLE);
-  $('#mvFile').onchange = async e => { const f = e.target.files[0]; if (!f) return; const text = await f.text(); e.target.value = '';
-    parsed = parseMovesMd(text); const codes = parsed.map(m => m.code).filter(String), dup = [...new Set(codes.filter((c, i) => codes.indexOf(c) !== i))];
-    $('#mvPreview').innerHTML = parsed.length ? `<div class="chg"><b>${esc(f.name)}</b>에서 동작 ${parsed.length}개를 읽었어요 (부위 ${new Set(parsed.map(m => m.area || '기타')).size}개).${dup.length ? `<div class="jn-late" style="font-size:12.5px;margin-top:4px">같은 코드가 여러 번 있어요: ${dup.map(esc).join(', ')} (Enter로 넣을 때 첫 번째가 들어가요)</div>` : ''}
-      <div class="mv-grp">${parsed.slice(0, 12).map(m => `${m.area ? esc(m.area) + ' · ' : ''}${m.code ? `[${esc(m.code)}] ` : ''}${esc(m.name)}${m.dose ? ` (${esc(m.dose)})` : ''}`).join('<br>')}${parsed.length > 12 ? `<br>… 외 ${parsed.length - 12}개` : ''}</div>
-      <div class="acts" style="margin-top:8px"><button class="btn pri" type="button" id="mvSave">이 목록으로 바꾸기</button><button class="btn" type="button" id="mvCancel">취소</button></div></div>`
-      : '<div class="chg jn-late">읽은 동작이 없어요. "## 부위" 아래에 "- 동작 이름" 형식인지 확인해 주세요.</div>'; };
-  $('#mvPreview').addEventListener('click', async e => {
-    if (e.target.id === 'mvCancel'){ parsed = null; $('#mvPreview').innerHTML = ''; return; }
-    if (e.target.id !== 'mvSave' || !parsed) return; $('#mvStatus').textContent = '저장 중…';
-    const r = await call('setMoves', { rows: parsed });
-    if (!r.ok) return $('#mvStatus').textContent = '저장하지 못했어요: ' + (r.message || errText(r.error));
-    moves = r.rows; parsed = null; $('#mvPreview').innerHTML = ''; drawMoves(); $('#mvStatus').textContent = `동작 ${moves.length}개를 저장했어요. 일지에서 바로 쓸 수 있어요.`; });
-  call('moves').then(r => { if (r.ok){ moves = r.rows || []; drawMoves(); } });
-  load();
-}
-/* 미리보기 모드(시트 미연결)용 수업일지: 이 브라우저에만 저장 */
-function previewJournal(action, x){
-  const JK = 'yu_journals_v1', MK = 'yu_moves_v1';
-  if (action === 'moves') return { ok:true, rows: lsGet(MK, []) };
-  if (action === 'setMoves'){ lsSet(MK, x.rows || []); return { ok:true, rows: x.rows || [] }; }
-  const books = lsGet(LS.bookings, []), js = lsGet(JK, {});
-  const view = j => Object.assign({}, j, { wstatus: jnStatus(j), md: jnMd(j), fileName: jnFileName(j), fileUrl:'' });
-  books.forEach(b => { const key = b.phone + '|' + b.name, mine = books.filter(o => o.phone + '|' + o.name === key && o.status !== '취소').sort((p, q) => (p.date + hm(p.hour)).localeCompare(q.date + hm(q.hour)));
-    const n = mine.findIndex(o => o.id === b.id) + 1, pk = pkgOf(b.itemName), j = js[b.id] || { id:'J' + b.id, booking:b.id, member:'', cond:'', pain:'', painArea:'', moves:[], resp:'', plan:'', hw:[], hwSent:false, hwAt:'' };
-    if (!js[b.id] && b.status === '취소') return;
-    Object.assign(j, { date:b.date, time:hm(b.hour), name:b.name, phone:b.phone, item:(b.category ? b.category.split(' ')[0] + ' ' : '') + (b.itemName || ''),
-      session: n ? (pk ? `${n}/${pk.count}회` : '1회') : '', nth: n ? String(n) : '', bstatus:b.status,
-      intake:{ area:[].concat(b.area||[]).join(', '), pain:b.pain ?? '', med:[].concat(b.med||[]).join(', '), medDetail:b.medDetail||'', memo:b.memo||'', calMemo:'', region:b.region||'', school:b.school||'' } });
-    js[b.id] = j; });
-  if (action === 'journalSave'){ const j = Object.values(js).find(o => o.id === x.journal.id); if (!j) return { ok:false, error:'notfound' };
-    const was = j.hwSent; ['cond','pain','painArea','moves','resp','plan','hw','hwSent'].forEach(k => { if (k in x.journal) j[k] = x.journal[k]; });
-    j.pain = String(j.pain ?? ''); if (j.hwSent && !was){ const n = new Date(); j.hwAt = `${ymd(n)} ${hm(n.getHours() + n.getMinutes()/60)}`; } if (!j.hwSent) j.hwAt = '';
-    lsSet(JK, js); return { ok:true, journal: view(j) }; }
-  lsSet(JK, js);
-  const today = ymd(new Date()), from14 = (() => { const d = new Date(); d.setDate(d.getDate() - 14); return ymd(d); })();
-  const all = Object.values(js);
-  return { ok:true, rows: all.filter(j => j.date >= x.from && j.date <= x.to).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)).map(view),
-    pending: all.filter(j => j.hw.length && !j.hwSent && j.bstatus !== '취소' && j.bstatus !== '노쇼' && j.date <= today && j.date >= from14).map(j => ({ id:j.id, date:j.date, time:j.time, name:j.name, hw:j.hw, due:j.date + ' 22:00' })), made:0 };
-}
-
 /* ---------- 예약 오픈 기간 (이번 달 + 매달 10일 낮 12시에 다음 달) ---------- */
 function calcOpenUntil(){
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hourCycle:'h23' })
@@ -1824,7 +1495,7 @@ function showMember(){
     const done = `${ms.date} ${hm(ms.hour)}`, bd = ms.date, bh = ms.hour; mem = r.member; ms.date=null; ms.hour=null; $('#mMemo').value='';
     await Store.refresh().catch(()=>{}); renderHome(); msg('#mBookMsg', `${done} 예약이 확정됐어요. 남은 횟수 ${mem.remaining}회`, true);
     const mins = (CONFIG.categories.find(c => /키즈|학생/.test(mem.item||'') ? c.id==='kids' : c.id==='adult') || {}).minutes;
-    $('#mGuide').innerHTML = `<div class="pay-note" style="margin-top:16px">✓ 예약이 확정됐어요. 남은 횟수 ${Math.max(0, mem.remaining)}회</div>` + visitGuide(bd, bh, mins) + payButton(); animIn($('#mGuide'), 'anim-up');
+    $('#mGuide').innerHTML = `<div class="pay-note" style="margin-top:16px">✓ 예약이 확정됐어요. 남은 횟수 ${Math.max(0, mem.remaining)}회</div>` + visitGuide(bd, bh, mins); animIn($('#mGuide'), 'anim-up');
     $('#mGuide').scrollIntoView({ behavior:'smooth', block:'start' });
   };
   $('#mLogout').onclick = () => { $('#mGuide').innerHTML=''; cred=null; mem=null; ms.date=null; ms.hour=null; $('#mHome').classList.add('hide'); $('#mLogin').classList.remove('hide'); };
