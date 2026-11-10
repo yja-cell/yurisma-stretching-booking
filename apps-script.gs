@@ -160,7 +160,9 @@ function checkAdmin_(key) {
  * 키는 스크립트 속성 PASS_KEY에 있고, 관리자 화면에서 링크를 복사하거나 새 키로 바꿀 수 있다(바꾸면 이전 링크는 막힘). */
 // 사진·영상·후기 활용 선택 동의(약정서 없는 예약: 웰컴·1회권) → 시트에 한 줄로
 function mediaText_(m) { m = m || {}; const yn = v => v ? '동의' : '미동의';
-  return '전후사진 ' + yn(m.snsPhoto) + ' / 수업영상 ' + yn(m.snsVideo) + ' / 후기 ' + yn(m.review) + ' / 얼굴 ' + (m.face ? '노출 허용' : '가림'); }
+  const all = m.snsPhoto && m.snsVideo && m.review, none = !m.snsPhoto && !m.snsVideo && !m.review;
+  const use = all ? '영상·사진 활용 동의' : none ? '영상·사진 활용 미동의' : '전후사진 ' + yn(m.snsPhoto) + ' / 수업영상 ' + yn(m.snsVideo) + ' / 후기 ' + yn(m.review);
+  return use + ' / 얼굴 ' + (m.face ? '노출 허용' : '가림'); }
 function isWelcome_(itemId) { return /-welcome$/.test(String(itemId || '')); }
 function passKey_() {
   const pr = PropertiesService.getScriptProperties(); let k = pr.getProperty('PASS_KEY');
