@@ -14,9 +14,6 @@
  *   기존 회원은 이름+연락처로 확인한다(시안용. 실제는 유리스마스쿨 로그인으로 대체).
  * - 가격: 상품별 판매가·정가·이벤트가 표시. 관리자 화면 [가격 관리]에서 바꾸면 새 신청부터 적용된다.
  * - 주간차단 / 날짜차단: 예약 불가 시간.
- * - 수업일지 (v23, 2026-11-08): 예약마다 한 줄 + 구글 드라이브 '유리스마 스트레칭 수업일지' 폴더의 MD 파일. 파일 맨 아래 '수업일지' 부분 참고.
- * - 동작목록: 관리자가 올린 스트레칭 동작 MD를 읽은 결과(부위·코드·동작·기본 처방).
- *   v23 업데이트 때는 setup을 한 번 더 실행한다. 구글 드라이브 권한과 트리거(매시간 homeworkReminder) 권한을 새로 물어본다.
  *
  * 보안 장치
  * - 관리자 기능은 ADMIN_KEY가 맞아야만 된다. 5번 틀리면 15분 잠금.
@@ -68,6 +65,7 @@ function setup() {
   ms.getRange(1, 1, 1, MEM_H.length).setValues([MEM_H]).setFontWeight('bold');
   if (ms.getMaxColumns() > MEM_H.length) ms.getRange(1, MEM_H.length + 1, 1, ms.getMaxColumns() - MEM_H.length).clearContent();
   readPrices_();   // '가격' 탭이 없으면 기본값으로 만든다
+  passKey_();      // 세션권 전용 링크 키가 없으면 만든다
   sheet_('회원권', PASS_H).getRange(1, 1, 1, PASS_H.length).setValues([PASS_H]).setFontWeight('bold');
   sheet_('지정가', CUSTOM_H);
   Logger.log('회원권 옮김: ' + withLock_(() => ({ ok: true, made: migratePasses_() })).made + '명');
@@ -77,17 +75,6 @@ function setup() {
   sheet_('약정서', CON_H).getRange(1, 1, 1, CON_H.length).setValues([CON_H]).setFontWeight('bold');
   sheet_('주간차단', ['요일', '시간']);
   sheet_('날짜차단', ['날짜', '시간(비우면 하루 전체)']);
-  // 수업일지: 탭·드라이브 폴더·숙제 리마인더(매시간 검사, 20~22시에 메일)
-  sheet_('수업일지', JN_H).getRange(1, 1, 1, JN_H.length).setValues([JN_H]).setFontWeight('bold');
-  sheet_('동작목록', MOVE_H).getRange(1, 1, 1, MOVE_H.length).setValues([MOVE_H]).setFontWeight('bold');
-  Logger.log('수업일지 폴더: ' + journalFolder_().getUrl());
-  // 숙제 리마인더: 매시간 homeworkSchedule이 '오늘 22:00 정각'에 homeworkReminder를 한 번 예약해 둔다.
-  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'homeworkReminder').forEach(t => ScriptApp.deleteTrigger(t));
-  PropertiesService.getScriptProperties().deleteProperty('HW_TRIGGER_DATE');
-  if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'homeworkSchedule'))
-    ScriptApp.newTrigger('homeworkSchedule').timeBased().everyHours(1).create();
-  homeworkSchedule();
-  Logger.log('수업일지 맞춤(오늘~60일): ' + JSON.stringify(journalEnsure_(today_(), addDays_(today_(), 60))));
   Logger.log('비밀번호 찾기 메일 주소: ' + ownerEmail_() + ' / 남은 메일 할당량: ' + MailApp.getRemainingDailyQuota());
 }
 
@@ -110,7 +97,11 @@ function adminRecover_() {
 /* ---------- 입구 ---------- */
 function doGet(e) {
   const a = (e.parameter || {}).action;
-  if (a === 'slots') return json_({ ok: true, today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: readPrices_(), vat: { on: vatOn_(), from: VAT_FROM } });
+  if (a === 'slots') {   // 세션권(1·10·20회권) 가격은 원장이 보낸 전용 링크(pass)로 들어온 경우에만 내려준다
+    const full = passOk_((e.parameter || {}).pass), all = readPrices_(), prices = {};
+    Object.keys(all).forEach(k => { if (full || isWelcome_(k)) prices[k] = all[k]; });
+    return json_({ ok: true, today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: prices, full: full, vat: { on: vatOn_(), from: VAT_FROM } });
+  }
   return json_({ ok: false, error: 'unknown' });
 }
 
@@ -122,8 +113,7 @@ function doPost(e) {
   if (d.action === 'memberBook') return json_(memberBook_(d));
   if (d.action === 'adminRecover') return json_(adminRecover_());
   if (d.action === 'contract') return json_(contractOnly_(d));
-  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1, setMemo: 1, passAdd: 1, passEdit: 1, custom: 1, setCustom: 1,
-    journals: 1, journalSave: 1, moves: 1, setMoves: 1 };
+  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1, setMemo: 1, passAdd: 1, passEdit: 1, custom: 1, setCustom: 1, passLink: 1, passReset: 1 };
   if (!adminActions[d.action]) return json_({ ok: false, error: 'unknown' });
   const auth = checkAdmin_(d.key);
   if (!auth.ok) return json_(auth);
@@ -145,11 +135,9 @@ function doPost(e) {
     case 'passAdd': return json_(passAddAdmin_(d));
     case 'passEdit': return json_(passEdit_(d));
     case 'custom': return json_({ ok: true, list: readCustom_() });
+    case 'passLink': return json_({ ok: true, key: passKey_() });
+    case 'passReset': return json_(passReset_());
     case 'setCustom': return json_(writeCustom_(d.list || []));
-    case 'journals': return json_(journalList_(d));
-    case 'journalSave': return json_(journalSave_(d.journal || {}));
-    case 'moves': return json_({ ok: true, rows: readMoves_() });
-    case 'setMoves': return json_(writeMoves_(d.rows || []));
   }
 }
 
@@ -166,8 +154,21 @@ function checkAdmin_(key) {
 }
 
 /* ---------- 신규 손님 예약 ---------- */
+/* ---------- 세션권 전용 링크 ----------
+ * 첫 화면은 첫 상담(웰컴)만 예약할 수 있다. 1회권·10회권·20회권은 ?pass=키 링크(원장이 회원에게 보냄)로만 보이고 예약된다.
+ * 키는 스크립트 속성 PASS_KEY에 있고, 관리자 화면에서 링크를 복사하거나 새 키로 바꿀 수 있다(바꾸면 이전 링크는 막힘). */
+function isWelcome_(itemId) { return /-welcome$/.test(String(itemId || '')); }
+function passKey_() {
+  const pr = PropertiesService.getScriptProperties(); let k = pr.getProperty('PASS_KEY');
+  if (!k) { k = Utilities.getUuid().replace(/-/g, '').slice(0, 12); pr.setProperty('PASS_KEY', k); }
+  return k;
+}
+function passOk_(v) { return !!v && String(v) === passKey_(); }
+function passReset_() { const k = Utilities.getUuid().replace(/-/g, '').slice(0, 12); PropertiesService.getScriptProperties().setProperty('PASS_KEY', k); return { ok: true, key: k }; }
+
 function book_(d) {
   if (d.website) return { ok: false, error: 'invalid' };
+  if (!isWelcome_(d.itemId) && !passOk_(d.pass)) return { ok: false, error: 'needPass' };
   const hour = Number(d.hour), phone = digits_(d.phone);
   const v = validateSlot_(d.date, hour, false); if (v) return v;
   if (!String(d.name || '').trim() || !/^01[016789]\d{7,8}$/.test(phone)) return { ok: false, error: 'invalid', message: '이름/연락처 확인' };
@@ -365,6 +366,7 @@ function saveContract_(c, bookingId) {
 }
 function contractOnly_(d) {
   if (d.website) return { ok: false, error: 'invalid' };
+  if (!passOk_(d.pass)) return { ok: false, error: 'needPass' };
   const chk = checkContract_(d.contract, (d.contract || {}).product, (d.contract || {}).category); if (!chk.ok) return chk;
   const cache = CacheService.getScriptCache(), hourKey = 'bk_' + Utilities.formatDate(new Date(), TZ, 'yyyyMMddHH');
   if (Number(cache.get(hourKey) || 0) >= MAX_BOOKINGS_PER_HOUR) return { ok: false, error: 'busy' };
@@ -570,10 +572,7 @@ function smsAuto_() { return PropertiesService.getScriptProperties().getProperty
  *   8 = 결제 금액(만원, 회원은 이용권 전체 금액), 完 = 결제 완료, 20/19 = 총 20회 중 19회째(10·20회권)
  * 확정되면 일정을 만들고(항상 完), 시간 변경은 일정을 옮기고, 취소는 일정을 지운다. 새 예약은 들어오면 바로 확정이다(예전 '신청' 줄은 올리지 않음). 실패해도 예약은 그대로 저장된다. */
 function afterCal_(res) {
-  if (res && res.ok && res.id) {
-    if (res.memberId) calSyncMember_(res.memberId, res.id); else calSync_(res.id);
-    journalAfter_(res.id, res.memberId);   // 수업이 들어오면 수업일지(MD)를 자동으로 만들고, 시간 변경·취소·회차 변화도 맞춘다
-  }
+  if (res && res.ok && res.id) { if (res.memberId) calSyncMember_(res.memberId, res.id); else calSync_(res.id); }
   if (res) delete res.memberId;
   return res;
 }
@@ -876,298 +875,3 @@ function hourNum_(v) {
 }
 function safe_(v) { const s = String(v == null ? '' : v).slice(0, 1000); return /^[=+\-@]/.test(s) ? "'" + s : s; }
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-
-
-/* =========================================================
- * 수업일지 (v23)
- * - 예약이 들어오면(신규·회원·관리자 입력) 수업일지 줄과 MD 파일을 자동으로 만든다.
- *   MD 파일은 구글 드라이브 '유리스마 스트레칭 수업일지' 폴더에 YYYY-MM-DD-HH시-이름-수업일지.md 로 저장된다.
- * - 날짜·회원 정보·회차는 자동으로 채워진다. 컨디션·통증(수업 전), 진행 동작·전후 반응·다음 계획·숙제 동작(수업 후)은 관리자 화면에서 입력한다.
- * - 시간 변경은 파일 이름·내용에 반영되고, 취소되면 아무것도 적지 않은 일지 파일은 드라이브 휴지통으로 옮긴다(적은 내용이 있으면 남기고 '취소'로 표시).
- * - 숙제 동작이 있으면 그날 22시가 기한. 밤 10시 정각에 아직 '보냄' 체크가 안 된 일지를 스크립트 주인 메일로 한 번 알린다(수업이 9시 넘어 끝나기 때문).
- * - 스트레칭 동작 목록은 관리자가 MD 파일을 올리면 '동작목록' 탭에 저장되고, 일지 입력 화면의 빠른 입력에 쓰인다.
- * 일지에는 통증·진료 이력 같은 건강 정보가 들어간다. 시트·폴더는 본인만 볼 수 있게 두고 공유하지 않는다.
- * ========================================================= */
-const JN_H = ['일지번호', '예약번호', '회원번호', '수업일', '시간', '이름', '연락처', '이용권', '회차', '누적 회차', '예약 상태', '작성 상태',
-  '컨디션', '통증(0-10)', '통증 부위', '진행 동작', '전후 반응', '다음 수업 계획', '숙제 동작', '숙제 발송', '발송 시각', '리마인더 보냄', 'MD 파일ID', 'MD 해시', '수정시각'];
-const J = { id: 0, booking: 1, member: 2, date: 3, time: 4, name: 5, phone: 6, item: 7, session: 8, nth: 9, bstatus: 10, wstatus: 11,
-  cond: 12, pain: 13, painArea: 14, moves: 15, resp: 16, plan: 17, hw: 18, hwSent: 19, hwAt: 20, remind: 21, file: 22, hash: 23, updated: 24 };
-const MOVE_H = ['부위', '코드', '동작', '기본 처방'];
-const HW_DUE_HOUR = 22;
-const JOURNAL_FOLDER_NAME = '유리스마 스트레칭 수업일지';
-
-function cl_(v, max) { return String(v == null ? '' : v).replace(/\r/g, '').trim().slice(0, max || 3000); }   // 화면·MD용 값
-function g_(s) { s = String(s || ''); return /^[=+\-@]/.test(s) ? "'" + s : s; }   // 시트에 쓸 때만 수식 방지
-function jt_(v, max) { return g_(cl_(v, max)); }
-function lines_(v) { return String(v || '').split('\n').map(x => x.trim()).filter(String); }
-function maskPhone_(p) { p = digits_(p); return p.length >= 10 ? p.slice(0, 3) + '-****-' + p.slice(-4) : ''; }
-function nowStr_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'); }
-
-function journalFolder_() {
-  const pr = PropertiesService.getScriptProperties(), id = pr.getProperty('JOURNAL_FOLDER_ID');
-  if (id) { try { const f = DriveApp.getFolderById(id); if (!f.isTrashed()) return f; } catch (e) {} }
-  const f = DriveApp.createFolder(JOURNAL_FOLDER_NAME);
-  pr.setProperty('JOURNAL_FOLDER_ID', f.getId());
-  return f;
-}
-
-function journals_() {
-  const v = sheet_('수업일지', JN_H).getDataRange().getDisplayValues(), out = [];
-  for (let i = 1; i < v.length; i++) {
-    const r = v[i]; if (!r[J.id]) continue;
-    out.push({ row: i + 1, id: String(r[J.id]), booking: String(r[J.booking]), member: String(r[J.member] || ''), date: dateStr_(r[J.date]) || String(r[J.date]),
-      time: String(r[J.time]), name: String(r[J.name]), phone: digits_(r[J.phone]), item: String(r[J.item] || ''), session: String(r[J.session] || ''),
-      nth: String(r[J.nth] || ''), bstatus: String(r[J.bstatus] || ''), cond: String(r[J.cond] || ''), pain: String(r[J.pain] === undefined ? '' : r[J.pain]).trim(),
-      painArea: String(r[J.painArea] || ''), moves: lines_(r[J.moves]), resp: String(r[J.resp] || ''), plan: String(r[J.plan] || ''), hw: lines_(r[J.hw]),
-      hwSent: String(r[J.hwSent]).trim() === 'Y', hwAt: String(r[J.hwAt] || ''), remind: String(r[J.remind] || ''), file: String(r[J.file] || ''),
-      hash: String(r[J.hash] || ''), updated: String(r[J.updated] || '') });
-  }
-  return out;
-}
-
-// 회차: 캘린더 제목과 같은 방식(그 수업이 속한 회원권 안에서 몇 번째인지) + 누적 몇 회째
-function jnSession_(b, ctx) {
-  const m = b.memberId ? ctx.members.find(x => x.id === b.memberId) : null;
-  if (!m) { const pkg = packageOf_(b.r[C.item]); return { item: String(b.r[C.item] || ''), label: pkg ? '1/' + pkg.count + '회' : '1회', nth: '' }; }
-  const mine = ctx.rows.filter(x => x.memberId === m.id && x.active && x.status !== '신청').sort((a, c) => (a.date + hm_(a.hour)).localeCompare(c.date + hm_(c.hour)));
-  const idx = mine.findIndex(x => x.id === b.id);
-  if (idx < 0) return { item: m.item, label: '', nth: '' };
-  const pos = m.prev + idx + 1, hit = passAt_(passesFor_(m, ctx.passes), pos);
-  if (!hit) return { item: m.item, label: '', nth: String(pos) };
-  return { item: hit.p.item, label: hit.p.count > 1 ? hit.n + '/' + hit.p.count + '회' : '1회', nth: String(pos) };
-}
-
-function jnStatus_(j) {
-  if (j.bstatus === '취소' || j.bstatus === '노쇼') return j.bstatus;
-  if (j.moves.length || j.resp || j.plan || j.hw.length) return j.hw.length && !j.hwSent ? '숙제 발송 전' : '완료';
-  if (j.cond || j.pain !== '' || j.painArea) return '수업 전 입력';
-  return '작성 전';
-}
-function jnEmpty_(j) { return !(j.cond || j.pain !== '' || j.painArea || j.moves.length || j.resp || j.plan || j.hw.length); }
-
-function intake_(b) {
-  if (!b) return {};
-  const r = b.r;
-  return { area: String(r[C.area] || ''), pain: String(r[C.pain] === undefined ? '' : r[C.pain]), med: String(r[C.med] || ''), medDetail: String(r[C.medDetail] || ''),
-    memo: String(r[C.memo] || ''), calMemo: String(r[C.calMemo] || ''), region: String(r[C.region] || ''), school: String(r[C.school] || '') };
-}
-
-function journalFileName_(j) {
-  const nm = String(j.name || '').replace(/[\\/:*?"<>|\s]+/g, '');
-  return j.date + '-' + String(j.time).slice(0, 2) + '시-' + nm + '-수업일지' + (j.bstatus === '취소' ? '-취소' : '') + '.md';
-}
-
-function journalMd_(j, intake) {
-  intake = intake || {};
-  const q = s => '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-  const dow = WEEK[new Date(j.date + 'T12:00:00Z').getUTCDay()];
-  const item = x => '- ' + String(x).replace(/\s*\|\s*/, ' · ');
-  const block = t => String(t || '').trim() ? String(t).trim().split('\n').map(x => x.trim() ? (/^[-*]\s/.test(x.trim()) ? x.trim() : '- ' + x.trim()) : '').join('\n') : '- ';
-  const st = jnStatus_(j);
-  const L = ['---',
-    'title: ' + q(j.date + ' ' + j.name + ' 수업일지'),
-    'tags:', '  - 수업일지', '  - 유리스마스트레칭',
-    'date: ' + j.date,
-    'member: ' + q(j.name),
-    'member_id: ' + q(j.member),
-    'booking_id: ' + q(j.booking),
-    'item: ' + q(j.item),
-    'session: ' + q(j.session),
-    'status: ' + q(st),
-    'homework_due: ' + q(j.date + ' ' + HW_DUE_HOUR + ':00'),
-    'homework_sent: ' + (j.hwSent ? 'true' : 'false'),
-    '---', '',
-    '# ' + j.date + '(' + dow + ') ' + j.time + ' ' + j.name + ' 수업일지', '',
-    '## 기본 정보',
-    '- 날짜: ' + j.date + '(' + dow + ') ' + j.time,
-    '- 회원: ' + j.name + (j.phone ? ' · ' + maskPhone_(j.phone) : '') + (intake.region ? ' · ' + intake.region + (intake.school ? ', ' + intake.school : '') : ''),
-    '- 이용권: ' + (j.item || '-'),
-    '- 회차: ' + (j.session || '-') + (j.nth ? ' (누적 ' + j.nth + '회째)' : '')];
-  if (j.bstatus === '취소' || j.bstatus === '노쇼') L.push('- 예약 상태: ' + j.bstatus);
-  if (intake.area || intake.med || intake.memo || intake.calMemo) {
-    L.push('', '## 예약 때 받은 정보');
-    if (intake.area) L.push('- 불편 부위: ' + intake.area + (intake.pain !== '' ? ' · 통증 ' + intake.pain + '/10' : ''));
-    if (intake.med) L.push('- 진료·수술·질환 이력: ' + intake.med + (intake.medDetail ? ' (' + intake.medDetail + ')' : ''));
-    if (intake.memo) L.push('- 요청사항: ' + intake.memo);
-    if (intake.calMemo) L.push('- 관리자 메모: ' + intake.calMemo.replace(/\n/g, ' / '));
-  }
-  L.push('', '## 수업 전',
-    '- 컨디션: ' + (j.cond || ''),
-    '- 통증(0~10): ' + (j.pain !== '' ? j.pain + '/10' : ''),
-    '- 통증 부위: ' + (j.painArea || ''),
-    '', '## 진행한 동작', j.moves.length ? j.moves.map(item).join('\n') : '- ',
-    '', '## 전후 반응', block(j.resp),
-    '', '## 다음 수업 계획', block(j.plan),
-    '', '## 숙제 동작', j.hw.length ? j.hw.map(item).join('\n') : '- ',
-    '', '- [' + (j.hwSent ? 'x' : ' ') + '] 숙제 영상·동작 보냄 (기한 ' + j.date + ' ' + HW_DUE_HOUR + ':00' + (j.hwAt ? ' · 보낸 시각 ' + j.hwAt : '') + ')', '');
-  return L.join('\n');
-}
-
-// 드라이브 MD 파일을 일지 내용에 맞춘다. 바뀐 게 없으면 드라이브를 건드리지 않는다.
-function journalWrite_(j, b) {
-  const intake = intake_(b);
-  if (j.bstatus === '취소' && jnEmpty_(j)) {   // 아무것도 적지 않은 취소 수업: 파일을 휴지통으로(30일 안에 복구 가능)
-    if (j.file) { try { DriveApp.getFileById(j.file).setTrashed(true); } catch (e) {} }
-    return { file: '', hash: '' };
-  }
-  const md = journalMd_(j, intake), name = journalFileName_(j);
-  const hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, name + '\n' + md, Utilities.Charset.UTF_8));
-  if (j.file && hash === j.hash) return { file: j.file, hash: hash };
-  if (j.file) {
-    try { const f = DriveApp.getFileById(j.file); if (!f.isTrashed()) { f.setContent(md); if (f.getName() !== name) f.setName(name); return { file: j.file, hash: hash }; } } catch (e) {}
-  }
-  const f = journalFolder_().createFile(name, md, MimeType.PLAIN_TEXT);
-  return { file: f.getId(), hash: hash };
-}
-
-// 예약 한 건에 맞춰 일지 줄을 만들거나 머리 정보(날짜·시간·이름·이용권·회차·예약 상태)를 고친다. (잠금 안에서 호출)
-function journalSyncCore_(b, ctx) {
-  const s = sheet_('수업일지', JN_H);
-  let j = ctx.js.find(x => x.booking === b.id);
-  if (!j && !b.active) return 0;
-  const ses = jnSession_(b, ctx);
-  const head = { booking: b.id, member: b.memberId, date: b.date, time: hm_(b.hour), name: String(b.r[C.name] || '').trim(), phone: b.phone,
-    item: ses.item, session: ses.label, nth: ses.nth, bstatus: b.status };
-  if (j && !b.active) { head.item = j.item; head.session = j.session; head.nth = j.nth; }   // 취소된 수업은 원래 회차를 남긴다
-  let made = 0;
-  if (!j) {
-    const id = newId_('J');
-    j = Object.assign({ id: id, cond: '', pain: '', painArea: '', moves: [], resp: '', plan: '', hw: [], hwSent: false, hwAt: '', remind: '', file: '', hash: '' }, head);
-    s.appendRow([id, b.id, b.memberId, "'" + b.date, "'" + head.time, safe_(head.name), "'" + b.phone, safe_(head.item), "'" + head.session, head.nth, head.bstatus,
-      jnStatus_(j), '', '', '', '', '', '', '', '', '', '', '', '', nowStr_()]);
-    j.row = s.getLastRow(); ctx.js.push(j); made = 1;
-  } else {
-    const keys = ['member', 'date', 'time', 'name', 'phone', 'item', 'session', 'nth', 'bstatus'];
-    if (keys.some(k => String(j[k]) !== String(head[k]))) {
-      Object.assign(j, head);
-      s.getRange(j.row, J.member + 1, 1, J.bstatus - J.member + 1).setValues([[b.memberId, "'" + b.date, "'" + head.time, safe_(head.name), "'" + b.phone,
-        safe_(head.item), "'" + head.session, head.nth, head.bstatus]]);
-    }
-  }
-  s.getRange(j.row, J.wstatus + 1).setValue(jnStatus_(j));
-  const w = journalWrite_(j, b);
-  if (w.file !== j.file || w.hash !== j.hash) { s.getRange(j.row, J.file + 1, 1, 2).setValues([[w.file, w.hash]]); j.file = w.file; j.hash = w.hash; }
-  return made;
-}
-function jnCtx_() { return { rows: bookingRows_(), members: members_(), passes: passes_(), js: journals_() }; }
-
-// 예약이 바뀐 뒤: 그 예약 + 같은 회원의 앞으로 수업(회차가 바뀔 수 있음)을 맞춘다. 실패해도 예약은 그대로다.
-function journalAfter_(id, memberId) {
-  try {
-    withLock_(() => {
-      const ctx = jnCtx_(), today = today_();
-      ctx.rows.filter(x => x.id === id || (memberId && x.memberId === memberId && x.date >= today))
-        .forEach(b => { try { journalSyncCore_(b, ctx); } catch (e) { Logger.log('수업일지 실패 ' + b.id + ': ' + e); } });
-    });
-  } catch (e) { Logger.log('수업일지 연동 실패 ' + e); }
-}
-
-// 기간 안의 예약에 일지가 없으면 만든다(이 기능을 넣기 전 예약 포함).
-function journalEnsure_(from, to) {
-  return withLock_(() => {
-    const ctx = jnCtx_(); let made = 0, fail = 0;
-    ctx.rows.filter(b => b.date >= from && b.date <= to).forEach(b => { try { made += journalSyncCore_(b, ctx); } catch (e) { fail++; Logger.log('수업일지 실패 ' + b.id + ': ' + e); } });
-    return { ok: true, made: made, fail: fail };
-  });
-}
-
-function journalView_(j, b) {
-  const intake = intake_(b);
-  return { id: j.id, booking: j.booking, member: j.member, date: j.date, time: j.time, name: j.name, phone: j.phone, item: j.item, session: j.session, nth: j.nth,
-    bstatus: j.bstatus, wstatus: jnStatus_(j), cond: j.cond, pain: j.pain, painArea: j.painArea, moves: j.moves, resp: j.resp, plan: j.plan, hw: j.hw,
-    hwSent: j.hwSent, hwAt: j.hwAt, due: j.date + ' ' + HW_DUE_HOUR + ':00', intake: intake, fileName: journalFileName_(j),
-    fileUrl: j.file ? 'https://drive.google.com/file/d/' + j.file + '/view' : '', md: journalMd_(j, intake), updated: j.updated };
-}
-
-function journalList_(d) {
-  const from = String(d.from || today_()), to = String(d.to || from);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to || addDays_(from, 62) < to) return { ok: false, error: 'invalid', message: '기간은 62일까지 볼 수 있어요.' };
-  const ens = journalEnsure_(from, to);
-  const rows = bookingRows_(), js = journals_(), today = today_(), byId = {};
-  rows.forEach(b => byId[b.id] = b);
-  const list = js.filter(j => j.date >= from && j.date <= to).sort((a, c) => (a.date + a.time).localeCompare(c.date + c.time)).map(j => journalView_(j, byId[j.booking]));
-  // 숙제 리마인더: 최근 14일 ~ 오늘, 숙제가 있는데 아직 안 보낸 수업
-  const pending = js.filter(j => j.hw.length && !j.hwSent && j.bstatus !== '취소' && j.bstatus !== '노쇼' && j.date <= today && j.date >= addDays_(today, -14))
-    .sort((a, c) => (a.date + a.time).localeCompare(c.date + c.time))
-    .map(j => ({ id: j.id, date: j.date, time: j.time, name: j.name, hw: j.hw, due: j.date + ' ' + HW_DUE_HOUR + ':00' }));
-  return { ok: true, today: today, now: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), rows: list, pending: pending, made: ens.made, folderUrl: journalFolder_().getUrl() };
-}
-
-function journalSave_(x) {
-  const id = String(x.id || '');
-  const pain = String(x.pain == null ? '' : x.pain).trim();
-  if (pain !== '' && !(/^\d{1,2}$/.test(pain) && Number(pain) <= 10)) return { ok: false, error: 'invalid', message: '통증은 0~10 사이 숫자예요.' };
-  const arr = (a, n) => [].concat(a || []).map(v => String(v || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 150)).filter(String).slice(0, n);
-  return withLock_(() => {
-    const js = journals_(), j = js.find(r => r.id === id);
-    if (!j) return { ok: false, error: 'notfound' };
-    const b = bookingRows_().find(r => r.id === j.booking);
-    const wasSent = j.hwSent, has = k => Object.prototype.hasOwnProperty.call(x, k);   // 보낸 칸만 바꾸는 요청도 있어서, 온 칸만 고친다
-    if (has('cond')) j.cond = cl_(x.cond, 100);
-    if (has('pain')) j.pain = pain;
-    if (has('painArea')) j.painArea = cl_(x.painArea, 100);
-    if (has('moves')) j.moves = arr(x.moves, 80);
-    if (has('resp')) j.resp = cl_(x.resp, 3000);
-    if (has('plan')) j.plan = cl_(x.plan, 3000);
-    if (has('hw')) j.hw = arr(x.hw, 40);
-    if (has('hwSent')) j.hwSent = !!x.hwSent;
-    if (j.hwSent && !wasSent) j.hwAt = nowStr_();
-    if (!j.hwSent) j.hwAt = '';
-    j.updated = nowStr_();
-    const s = sheet_('수업일지', JN_H);
-    s.getRange(j.row, J.wstatus + 1, 1, J.hwAt - J.wstatus + 1).setValues([[jnStatus_(j), g_(j.cond), j.pain === '' ? '' : Number(j.pain), g_(j.painArea),
-      g_(j.moves.join('\n')), g_(j.resp), g_(j.plan), g_(j.hw.join('\n')), j.hwSent ? 'Y' : '', j.hwAt]]);
-    s.getRange(j.row, J.updated + 1).setValue(j.updated);
-    const w = journalWrite_(j, b);
-    s.getRange(j.row, J.file + 1, 1, 2).setValues([[w.file, w.hash]]); j.file = w.file; j.hash = w.hash;
-    return { ok: true, journal: journalView_(j, b) };
-  });
-}
-
-/* ---------- 숙제 리마인더 ----------
- * homeworkSchedule(매시간): 오늘 22:00 정각 일회용 트리거가 없으면 만든다(지난 일회용 트리거는 지운다).
- * homeworkReminder(22:00): 오늘 수업 중 숙제 동작이 있는데 '보냄' 체크가 안 된 일지를 모아 스크립트 주인 메일로 보낸다.
- * 같은 일지는 한 번만 알린다(리마인더 보냄 칸에 시각 기록). 회원에게는 아무것도 보내지 않는다. */
-function homeworkSchedule() {
-  const pr = PropertiesService.getScriptProperties(), today = today_();
-  const h = Number(Utilities.formatDate(new Date(), TZ, 'H'));
-  if (pr.getProperty('HW_TRIGGER_DATE') === today || h >= HW_DUE_HOUR) return;
-  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'homeworkReminder').forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger('homeworkReminder').timeBased().at(new Date(today + 'T' + pad_(HW_DUE_HOUR) + ':00:00+09:00')).create();
-  pr.setProperty('HW_TRIGGER_DATE', today);
-}
-function homeworkReminder() {
-  const h = Number(Utilities.formatDate(new Date(), TZ, 'H')), today = today_();
-  if (h < HW_DUE_HOUR) return;
-  const list = withLock_(() => {
-    const s = sheet_('수업일지', JN_H), now = nowStr_();
-    const js = journals_().filter(j => j.date === today && j.hw.length && !j.hwSent && !j.remind && j.bstatus !== '취소' && j.bstatus !== '노쇼');
-    js.forEach(j => s.getRange(j.row, J.remind + 1).setValue(now));
-    return js;
-  });
-  if (!list.length) return;
-  const site = PropertiesService.getScriptProperties().getProperty('SITE_URL') || 'https://yurisma-stretching-booking.vercel.app/';
-  const body = '오늘 수업의 숙제 동작 중 아직 보냄 체크가 안 된 것이 ' + list.length + '건 있어요.\n\n'
-    + list.map(j => '· ' + j.time + ' ' + j.name + ' (' + (j.session || '') + ')\n   숙제: ' + j.hw.map(x => x.split('|')[0].trim()).join(', ')).join('\n\n')
-    + '\n\n보낸 뒤 관리자 화면 [수업일지]에서 \'숙제 영상·동작 보냄\'을 체크해 주세요.\n' + site.replace(/\/?$/, '/') + '?admin';
-  MailApp.sendEmail(ownerEmail_(), '[유리스마 스트레칭] 아직 안 보낸 숙제 ' + list.length + '건', body);
-}
-
-/* ---------- 스트레칭 동작 목록 (관리자가 올린 MD를 화면에서 읽어 줄 단위로 저장) ---------- */
-function readMoves_() {
-  const v = sheet_('동작목록', MOVE_H).getDataRange().getDisplayValues(), out = [];
-  for (let i = 1; i < v.length; i++) { const r = v[i]; if (!String(r[2]).trim()) continue;
-    out.push({ area: String(r[0] || ''), code: String(r[1] || ''), name: String(r[2]).trim(), dose: String(r[3] || '') }); }
-  return out;
-}
-function writeMoves_(rows) {
-  if (!Array.isArray(rows) || rows.length > 600) return { ok: false, error: 'invalid', message: '동작은 600개까지 저장할 수 있어요.' };
-  const clean = rows.map(r => [jt_(r.area, 40), jt_(r.code, 20), jt_(r.name, 80), jt_(r.dose, 80)]).filter(r => r[2]);
-  if (!clean.length) return { ok: false, error: 'invalid', message: '읽은 동작이 없어요. 파일 형식을 확인해 주세요.' };
-  return withLock_(() => {
-    const s = sheet_('동작목록', MOVE_H);
-    if (s.getLastRow() > 1) s.getRange(2, 1, s.getLastRow() - 1, MOVE_H.length).clearContent();
-    s.getRange(2, 1, clean.length, MOVE_H.length).setValues(clean);
-    return { ok: true, rows: readMoves_() };
-  });
-}
