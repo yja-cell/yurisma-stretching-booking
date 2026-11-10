@@ -30,9 +30,9 @@ const MAX_ACTIVE_PER_PHONE = 3, MAX_BOOKINGS_PER_HOUR = 15, MAX_ADMIN_FAILS = 5,
 const RECOVER_COOLDOWN_MIN = 10;
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 const BOOK_H = ['접수시각', '예약번호', '상태', '예약일', '시간', '구분', '이용권', '금액', '이름', '연락처', '성별', '연령대',
-  '불편 부위', '통증(0-10)', '진료·수술·질환 이력', '이력 상세', '방문 경로', '요청사항', '필수동의', '관리 기록', '회원번호', '거주지', '학교', '캘린더 일정', '메모(캘린더)'];
+  '불편 부위', '통증(0-10)', '진료·수술·질환 이력', '이력 상세', '방문 경로', '요청사항', '필수동의', '관리 기록', '회원번호', '거주지', '학교', '캘린더 일정', '메모(캘린더)', '촬영·게시 동의(선택)'];
 const C = { created: 0, id: 1, status: 2, date: 3, time: 4, cat: 5, item: 6, price: 7, name: 8, phone: 9, gender: 10, age: 11,
-  area: 12, pain: 13, med: 14, medDetail: 15, route: 16, memo: 17, agreed: 18, note: 19, member: 20, region: 21, school: 22, cal: 23, calMemo: 24 };
+  area: 12, pain: 13, med: 14, medDetail: 15, route: 16, memo: 17, agreed: 18, note: 19, member: 20, region: 21, school: 22, cal: 23, calMemo: 24, media: 25 };
 const MEM_H = ['회원번호', '이름', '연락처', '이용권', '총 횟수', '이전 사용', '예약 사용', '남은 횟수', '만료일', '상태', '메모', '등록일', '약정서', '거주지', '학교'];
 const M = { id: 0, name: 1, phone: 2, item: 3, total: 4, prev: 5, used: 6, remain: 7, expires: 8, status: 9, memo: 10, created: 11, contract: 12, region: 13, school: 14 };
 // 구글 캘린더 '이솔강사님' (스크립트 속성 CALENDAR_ID로 바꿀 수 있음, CALENDAR_SYNC=off면 연동 중지)
@@ -65,7 +65,7 @@ function setup() {
   ms.getRange(1, 1, 1, MEM_H.length).setValues([MEM_H]).setFontWeight('bold');
   if (ms.getMaxColumns() > MEM_H.length) ms.getRange(1, MEM_H.length + 1, 1, ms.getMaxColumns() - MEM_H.length).clearContent();
   readPrices_();   // '가격' 탭이 없으면 기본값으로 만든다
-  passKey_(); oneKey_();   // 세션권·1회권 전용 링크 키가 없으면 만든다
+  passKey_();      // 세션권 전용 링크 키가 없으면 만든다
   sheet_('회원권', PASS_H).getRange(1, 1, 1, PASS_H.length).setValues([PASS_H]).setFontWeight('bold');
   sheet_('지정가', CUSTOM_H);
   Logger.log('회원권 옮김: ' + withLock_(() => ({ ok: true, made: migratePasses_() })).made + '명');
@@ -135,7 +135,7 @@ function doPost(e) {
     case 'passAdd': return json_(passAddAdmin_(d));
     case 'passEdit': return json_(passEdit_(d));
     case 'custom': return json_({ ok: true, list: readCustom_() });
-    case 'passLink': return json_({ ok: true, key: passKey_(), one: oneKey_() });
+    case 'passLink': return json_({ ok: true, key: passKey_() });
     case 'pricesAll': return json_({ ok: true, prices: readPrices_() });
     case 'passReset': return json_(passReset_());
     case 'setCustom': return json_(writeCustom_(d.list || []));
@@ -158,6 +158,9 @@ function checkAdmin_(key) {
 /* ---------- 세션권 전용 링크 ----------
  * 첫 화면은 첫 상담(웰컴)만 예약할 수 있다. 1회권·10회권·20회권은 ?pass=키 링크(원장이 회원에게 보냄)로만 보이고 예약된다.
  * 키는 스크립트 속성 PASS_KEY에 있고, 관리자 화면에서 링크를 복사하거나 새 키로 바꿀 수 있다(바꾸면 이전 링크는 막힘). */
+// 사진·영상·후기 활용 선택 동의(약정서 없는 예약: 웰컴·1회권) → 시트에 한 줄로
+function mediaText_(m) { m = m || {}; const yn = v => v ? '동의' : '미동의';
+  return '전후사진 ' + yn(m.snsPhoto) + ' / 수업영상 ' + yn(m.snsVideo) + ' / 후기 ' + yn(m.review) + ' / 얼굴 ' + (m.face ? '노출 허용' : '가림'); }
 function isWelcome_(itemId) { return /-welcome$/.test(String(itemId || '')); }
 function passKey_() {
   const pr = PropertiesService.getScriptProperties(); let k = pr.getProperty('PASS_KEY');
@@ -170,12 +173,11 @@ function oneKey_() {   // 1회권 전용 링크 키 (세션권 링크와 따로)
   return k;
 }
 // 링크 종류: 'one' = 1회권 링크, 'pkg' = 세션권(10·20회권) 링크, '' = 없음
-function passLevel_(v) { v = String(v || ''); if (!v) return ''; if (v === passKey_()) return 'pkg'; if (v === oneKey_()) return 'one'; return ''; }
-function itemLevel_(itemId) { return /-1$/.test(String(itemId || '')) ? 'one' : /-(10|20)$/.test(String(itemId || '')) ? 'pkg' : ''; }
+function passLevel_(v) { v = String(v || ''); return v && v === passKey_() ? 'pkg' : ''; }   // 세션권 링크 하나(1회권·10회권·20회권)
+function itemLevel_(itemId) { return /-(1|10|20)$/.test(String(itemId || '')) ? 'pkg' : ''; }
 function passOk_(v) { return passLevel_(v) === 'pkg'; }
 function passReset_() {   // 두 링크를 모두 새로 만든다(이전 링크는 막힘)
-  const pr = PropertiesService.getScriptProperties(), nk = () => Utilities.getUuid().replace(/-/g, '').slice(0, 12), k = nk(), o = nk();
-  pr.setProperty('PASS_KEY', k); pr.setProperty('ONE_KEY', o); return { ok: true, key: k, one: o };
+  const k = Utilities.getUuid().replace(/-/g, '').slice(0, 12); PropertiesService.getScriptProperties().setProperty('PASS_KEY', k); return { ok: true, key: k };
 }
 
 function book_(d) {
@@ -205,7 +207,7 @@ function book_(d) {
     appendBooking_({ id: id, status: '확정', date: d.date, hour: hour, cat: d.category, item: d.itemName, price: pr.price, name: d.name, phone: phone,
       gender: d.gender, age: d.age, area: [].concat(d.area || []).join(', '), pain: Number(d.pain) || 0, med: [].concat(d.med || []).join(', '),
       medDetail: d.medDetail, route: d.route, memo: d.memo, agreed: 'Y', note: [con ? '약정서 서명' : '', mem.note].filter(String).join(' / '),
-      member: mem.id || '', region: region, school: school });
+      member: mem.id || '', region: region, school: school, media: con ? '약정서 참고' : mediaText_(d.media) });
     cache.put(hourKey, String(Number(cache.get(hourKey) || 0) + 1), 3600);
     const out = { ok: true, id: id, memberId: mem.id || '' };
     if (con) { out.contractId = conId; out.contract = con; }
@@ -409,8 +411,8 @@ function contractHtml_(c, id) {
     + CONTRACT_TERMS_HTML.replace('1회 정가 150,000원', '1회 정가 ' + oneList_())
     + '<h2>개인정보 수집·이용 동의</h2><table><tr><th>필수</th><td>성명, 연락처, 주소, 생년월일, 결제 정보 / 계약 이행·일정 안내·환불 처리 / 계약 종료 후 3년</td><td>■ 동의</td></tr>'
     + '<tr><th>필수(민감정보)</th><td>질환, 통증, 수술 이력, 복용 약 등 건강 정보 / 안전한 운동 프로그램 설계 / 계약 종료 시 파기</td><td>■ 동의</td></tr>'
-    + '<tr><th>선택</th><td>전·후 사진 촬영 및 인스타그램 등 SNS 게시</td><td>' + yn(c.snsPhoto) + '</td></tr>'
-    + '<tr><th>선택</th><td>수업 영상 촬영 및 인스타그램 등 SNS 게시</td><td>' + yn(c.snsVideo) + '</td></tr>'
+    + '<tr><th>선택</th><td>전·후 사진 촬영 및 인터넷 및 SNS 게시</td><td>' + yn(c.snsPhoto) + '</td></tr>'
+    + '<tr><th>선택</th><td>수업 영상 촬영 및 인터넷 및 SNS 게시</td><td>' + yn(c.snsVideo) + '</td></tr>'
     + '<tr><th>선택</th><td>작성한 후기(리뷰)의 SNS·홈페이지 홍보 활용</td><td>' + yn(c.review) + '</td></tr>'
     + '<tr><th>선택</th><td>게시물에 얼굴 노출 허용 (미동의 시 얼굴을 가리고 게시)</td><td>' + yn(c.face) + '</td></tr></table>'
     + '<div>선택 항목은 동의하지 않아도 불이익이 없으며, 언제든 철회를 요청하면 게시물을 지체 없이 내립니다.</div>'
@@ -771,7 +773,7 @@ function appendBooking_(b) {
   sheet_('예약', BOOK_H).appendRow([
     Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), b.id, b.status, "'" + b.date, "'" + hm_(b.hour), safe_(b.cat), safe_(b.item),
     Number(b.price) || '', safe_(b.name), "'" + b.phone, safe_(b.gender), safe_(b.age), safe_(b.area), b.pain === '' ? '' : Number(b.pain) || 0,
-    safe_(b.med), safe_(b.medDetail), safe_(b.route), safe_(b.memo), b.agreed, safe_(b.note), b.member || '', safe_(b.region || ''), safe_(b.school || ''), '', b.calMemo || ''
+    safe_(b.med), safe_(b.medDetail), safe_(b.route), safe_(b.memo), b.agreed, safe_(b.note), b.member || '', safe_(b.region || ''), safe_(b.school || ''), '', b.calMemo || '', b.media || ''
   ]);
 }
 function cleanMemo_(v) { return safe_(String(v || '').replace(/\r/g, '').trim().slice(0, 300)); }
@@ -795,7 +797,7 @@ function listBookings_() {
     id: b.id, status: b.status, date: b.date, hour: b.hour, created: b.r[C.created], category: b.r[C.cat], itemName: b.r[C.item],
     name: b.r[C.name], phone: b.phone, gender: b.r[C.gender], age: b.r[C.age], area: b.r[C.area], pain: b.r[C.pain],
     med: b.r[C.med], medDetail: b.r[C.medDetail], route: b.r[C.route], memo: b.r[C.memo], note: b.r[C.note] || '', memberId: b.memberId,
-    region: b.r[C.region] || '', school: b.r[C.school] || '', cal: !!String(b.r[C.cal] || '').trim(), calMemo: b.r[C.calMemo] || ''
+    region: b.r[C.region] || '', school: b.r[C.school] || '', cal: !!String(b.r[C.cal] || '').trim(), calMemo: b.r[C.calMemo] || '', media: b.r[C.media] || ''
   }));
 }
 function addNote_(s, row, text) {
