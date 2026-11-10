@@ -413,9 +413,7 @@ function contractHtml_(c, id) {
     + CONTRACT_TERMS_HTML.replace('1회 정가 150,000원', '1회 정가 ' + oneList_())
     + '<h2>개인정보 수집·이용 동의</h2><table><tr><th>필수</th><td>성명, 연락처, 주소, 생년월일, 결제 정보 / 계약 이행·일정 안내·환불 처리 / 계약 종료 후 3년</td><td>■ 동의</td></tr>'
     + '<tr><th>필수(민감정보)</th><td>질환, 통증, 수술 이력, 복용 약 등 건강 정보 / 안전한 운동 프로그램 설계 / 계약 종료 시 파기</td><td>■ 동의</td></tr>'
-    + '<tr><th>선택</th><td>전·후 사진 촬영 및 인터넷 및 SNS 게시</td><td>' + yn(c.snsPhoto) + '</td></tr>'
-    + '<tr><th>선택</th><td>수업 영상 촬영 및 인터넷 및 SNS 게시</td><td>' + yn(c.snsVideo) + '</td></tr>'
-    + '<tr><th>선택</th><td>작성한 후기(리뷰)의 SNS·홈페이지 홍보 활용</td><td>' + yn(c.review) + '</td></tr>'
+    + '<tr><th>선택</th><td>영상·사진 활용 동의<br><span style="color:#6b7280;font-size:12px">① 전·후 사진 촬영 및 인터넷 및 SNS 게시 ② 수업 영상 촬영 및 인터넷 및 SNS 게시 ③ 후기(리뷰)를 인터넷 및 SNS 홍보에 활용</span></td><td>' + yn(c.snsPhoto && c.snsVideo && c.review) + '</td></tr>'
     + '<tr><th>선택</th><td>게시물에 얼굴 노출 허용 (미동의 시 얼굴을 가리고 게시)</td><td>' + yn(c.face) + '</td></tr></table>'
     + '<div>선택 항목은 동의하지 않아도 불이익이 없으며, 언제든 철회를 요청하면 게시물을 지체 없이 내립니다.</div>'
     + '<p>위의 모든 사항을 설명 듣고 이해하였으며, 이에 동의하여 약정을 체결합니다.</p>'

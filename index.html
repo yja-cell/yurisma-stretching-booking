@@ -924,9 +924,7 @@ const TERMS_HTML = `<h5>1. 수업 진행과 사용 기간</h5>1) 모든 세션�
 const CONSENTS = [
   { k:'agreeRequired', req:true, t:'성명·연락처·주소·생년월일·결제 정보 수집·이용', s:'목적: 계약 이행, 일정 안내, 환불 처리 · 보유: 계약 종료 후 3년(법령상 보존 기간이 더 길면 그 기간)' },
   { k:'agreeSensitive', req:true, t:'건강정보(민감정보) 수집·이용', s:'항목: 질환, 통증, 수술 이력, 복용 약 등 · 목적: 안전한 운동 프로그램 설계 · 보유: 계약 종료 시 파기' },
-  { k:'snsPhoto', t:'전·후 사진 촬영 및 인터넷 및 SNS 게시', s:'목적: 자세·체형 변화 기록과 홍보 · 보유: 원본은 계약 종료 시 파기, 게시물은 철회 요청 시까지' },
-  { k:'snsVideo', t:'수업 영상 촬영 및 인터넷 및 SNS 게시', s:'목적: 운동 피드백과 홍보 · 보유: 원본은 계약 종료 시 파기, 게시물은 철회 요청 시까지' },
-  { k:'review', t:'작성한 후기(리뷰)를 인터넷 및 SNS 홍보에 활용', s:'이름은 가려서 게시 · 보유: 철회 요청 시까지' },
+  { k:'mediaUse', t:'영상·사진 활용 동의', s:'① 전·후 사진 촬영 및 인터넷 및 SNS 게시(자세·체형 변화 기록과 홍보) ② 수업 영상 촬영 및 인터넷 및 SNS 게시(운동 피드백과 홍보) ③ 작성한 후기(리뷰)를 인터넷 및 SNS 홍보에 활용(이름은 가려서 게시) · 보유: 원본은 계약 종료 시 파기, 게시물은 철회 요청 시까지' },
   { k:'face', t:'게시물에 얼굴 노출 허용', s:'동의하지 않으면 얼굴을 가린 상태로만 게시합니다' },
 ];
 function pkgOf(name){ const m = String(name||'').match(/(10|20)회권/); return m ? { key:m[0], count:+m[1], days: m[1]==='10' ? 70 : 140 } : null; }
@@ -994,6 +992,7 @@ function makeContract(host, opts={}){
       const c = { name:q('name').value.trim(), phone:q('phone').value.replace(/\D/g,''), birth:q('birth').value, address:q('address').value.trim(),
         pay:(root.querySelector(`input[name="${uid}pay"]:checked`)||{}).value || '', agreeTerms:q('agreeTerms').checked, sign: small.toDataURL('image/png'), ua: navigator.userAgent };
       CONSENTS.forEach(x => c[x.k] = q(x.k).checked);
+  c.snsPhoto = c.snsVideo = c.review = !!c.mediaUse;   // 영상·사진 활용 동의 하나로 세 항목을 함께 기록
       if (minor()) { c.guardianName=q('guardianName').value.trim(); c.guardianRel=q('guardianRel').value.trim(); c.guardianPhone=q('guardianPhone').value.replace(/\D/g,''); }
       return Object.assign(c, { minutes:info.minutes, unit:info.unit, total:info.total, start:info.start || '', productLabel:info.product, days:info.days, minor:minor() }); },
   };
