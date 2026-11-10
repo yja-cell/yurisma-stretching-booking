@@ -512,10 +512,14 @@ select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-r
       <div class="status" id="smsStatus"></div>
     </div>
     <div class="box">
-      <b>세션권 전용 링크 (회원에게만 보내기)</b>
-      <div class="note">첫 화면은 <b>첫 상담(웰컴)</b>만 보여요. 1회권·10회권·20회권 가격과 구매·예약은 이 링크로만 열려요. 첫 상담을 마친 회원에게 이 링크를 보내 주세요. 링크를 바꾸면 이전 링크는 바로 막혀요.</div>
-      <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><input type="text" id="passUrl" readonly style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;background:#fff" placeholder="불러오는 중…"><button class="btn pri" id="passCopy">링크 복사</button><button class="btn" id="passNew">링크 바꾸기</button></div>
-      <div class="note" style="margin-top:6px">10·20회권 약정서만 따로 받을 때: <a href="?contract" target="_blank" id="contractLink2">약정서 작성 링크</a> (아래 회원 관리의 약정서 링크와 같아요)</div>
+      <b>회원 전용 링크 (회원에게만 보내기)</b>
+      <div class="note">첫 화면은 <b>첫 상담(웰컴)</b>만 보여요. 아래 링크는 기존 회원 예약과 나뉜 별도 페이지예요. 링크를 바꾸면 두 링크 모두 새로 만들어지고 이전 링크는 바로 막혀요.</div>
+      <label class="f" style="margin-top:10px">1회권 링크 <small>(1회권만 보여요)</small></label>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><input type="text" id="oneUrl" readonly style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;background:#fff" placeholder="불러오는 중…"><button class="btn pri" data-copy="#oneUrl">복사</button></div>
+      <label class="f" style="margin-top:10px">세션권 링크 <small>(10회권·20회권만 보여요)</small></label>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><input type="text" id="passUrl" readonly style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;background:#fff" placeholder="불러오는 중…"><button class="btn pri" data-copy="#passUrl">복사</button></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="passNew">두 링크 모두 바꾸기</button></div>
+      <div class="note" style="margin-top:6px">10·20회권 약정서만 따로 받을 때: <a href="?contract" target="_blank" id="contractLink2">약정서 작성 링크</a> (세션권 링크와 같은 키)</div>
       <div class="status" id="passStatus"></div>
     </div>
     <div class="box">
@@ -628,7 +632,7 @@ const API = CONFIG.sheetApiUrl.trim();
 const QS0 = new URLSearchParams(location.search);
 const PASS_TOKEN = QS0.get('pass') || '';
 const MODE_PASS = QS0.has('pass') && !QS0.has('admin') && !QS0.has('contract');
-let adminPassKey = '', passState = MODE_PASS ? 'loading' : 'off';
+let adminPassKey = '', passState = MODE_PASS ? 'loading' : 'off', passLevel = '';   // passLevel: 'one' = 1회권 링크, 'pkg' = 세션권(10·20회권) 링크
 const isWelcomeId = id => /-welcome$/.test(String(id || ''));
 const LS = { blocks:'yu_blocks_v2', bookings:'yu_bookings_v2' };
 const lsGet = (k,d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -641,7 +645,7 @@ const Store = {
       const r = await fetch(API + '?action=slots&t=' + Date.now() + (pk ? '&pass=' + encodeURIComponent(pk) : ''));
       const j = await r.json(); if (!j.ok) throw new Error(j.error || '불러오기 실패');
       this.blocks = j.blocks; this.booked = j.booked; if (j.openUntil) this.openUntil = j.openUntil; renderOpenNotice();
-      if (MODE_PASS) passState = j.full ? 'ok' : 'bad';
+      if (MODE_PASS) { passLevel = j.level || ''; passState = passLevel ? 'ok' : 'bad'; }
       if (j.vat) VAT = j.vat; if (j.prices) applyPrices(j.prices);
     } else {
       this.blocks = Object.assign({ weekly:{}, dates:{} }, lsGet(LS.blocks, {}));
@@ -737,12 +741,13 @@ function applyPrices(p){
 }
 
 /* ---------- STEP 1 ---------- */
-const visItems = () => catObj().items.filter(i => MODE_PASS ? !isWelcomeId(i.id) : isWelcomeId(i.id));
+const visItems = () => catObj().items.filter(i => !MODE_PASS ? isWelcomeId(i.id) : passLevel === 'one' ? /-1$/.test(i.id) : passLevel === 'pkg' ? /-(10|20)$/.test(i.id) : false);
 function renderItems(){
-  if (!MODE_PASS && !st.item) st.item = (visItems()[0] || {}).id || null;   // 첫 상담은 상품이 하나라 미리 골라 둔다
+  if (!st.item && (!MODE_PASS || passLevel === 'one')) st.item = (visItems()[0] || {}).id || null;   // 상품이 하나뿐인 페이지(첫 상담·1회권)는 미리 골라 둔다
+  if (MODE_PASS) setPassHero();
   $('#catTabs').innerHTML = CONFIG.categories.map(c => `<button data-c="${c.id}" class="${c.id===st.cat?'on':''}">${c.label}</button>`).join('');
   const m = catObj().minutes;
-  if (MODE_PASS && passState !== 'ok') { $('#itemList').innerHTML = passState === 'bad' ? '<div class="notice">링크가 맞지 않거나 바뀌었어요. 이솔 원장님께 세션권 링크를 다시 요청해 주세요.</div>' : '<div class="loading">세션권을 불러오는 중…</div>'; return; }
+  if (MODE_PASS && passState !== 'ok') { $('#itemList').innerHTML = passState === 'bad' ? '<div class="notice">링크가 맞지 않거나 바뀌었어요. 이솔 원장님께 링크를 다시 요청해 주세요.</div>' : '<div class="loading">불러오는 중…</div>'; return; }
   $('#itemList').innerHTML = visItems().map(i => `
     <div class="item ${i.id===st.item?'on':''}" data-i="${i.id}" role="button" tabindex="0">
       <div><div class="t">${i.name}${i.tag?`<span class="tag">${i.tag}</span>`:''}${i.event?'<span class="tag ev">이벤트가</span>':''}</div>
@@ -751,6 +756,13 @@ function renderItems(){
     </div>`).join('');
 }
 $('#catTabs').addEventListener('click', e => { const c=e.target.dataset.c; if(!c) return; st.cat=c; st.item=null; renderItems(); updateBar(); });
+function setPassHero(){   // 전용 링크 페이지 제목: 1회권 링크 / 세션권 링크
+  const hp = document.querySelector('#bookView .hero'); if (!hp) return;
+  const one = passLevel === 'one';
+  hp.querySelector('h1').textContent = passState !== 'ok' ? '회원 전용 예약' : one ? '1회권 구매·예약' : '세션권 구매·예약';
+  hp.querySelector('p').innerHTML = '이솔 원장님이 보내드린 <b>회원 전용 링크</b>예요.<br>' + (one ? '1회권으로 원하는 날짜를 <b>바로 예약</b>하세요.' : passState === 'ok' ? '10회권·20회권을 고르고 첫 수업 날짜를 <b>바로 예약</b>하세요.' : '');
+  document.querySelector('#bookView [data-step="1"] h2').textContent = one ? '1회권을 예약해 주세요' : '세션권을 골라 주세요';
+}
 window.addEventListener('pricesloaded', () => { if (!$('#bookView').classList.contains('hide') && st.step===1) { renderItems(); updateBar(); } });
 $('#itemList').addEventListener('click', e => { const el=e.target.closest('.item'); if(!el) return; st.item=el.dataset.i; renderItems(); updateBar(); });
 $('#itemList').addEventListener('keydown', e => { if((e.key==='Enter'||e.key===' ') && e.target.classList.contains('item')){ e.preventDefault(); e.target.click(); } });
@@ -1203,20 +1215,20 @@ async function showAdmin(){
       </div>`; }).join('') : '<div class="note">이 기간에 표시할 예약이 없습니다.</div>';
   };
   /* 세션권 전용 링크 */
-  const setPassUi = k => { const base = location.origin + location.pathname;
-    $('#passUrl').value = base + '?pass=' + k;
+  const setPassUi = (k, one) => { const base = location.origin + location.pathname;
+    $('#passUrl').value = base + '?pass=' + k; $('#oneUrl').value = base + '?pass=' + one;
     ['#contractLink', '#contractLink2'].forEach(s => { const a = document.querySelector(s); if (a) a.href = base + '?contract&pass=' + k; }); };
   const loadPassLink = async () => {
     const r = await Store.admin('passLink', key).catch(() => ({ ok:false })); if (!r.ok) return;
-    adminPassKey = r.key; setPassUi(r.key);
-    await Store.refresh().catch(()=>{}); drawPrices(); if (typeof fillItems === 'function') fillItems();   // 세션권 가격까지 받아 가격 관리·불러오기에 채움
+    adminPassKey = r.key; setPassUi(r.key, r.one);
+    const pa = await Store.admin('pricesAll', key).catch(() => ({ ok:false })); if (pa.ok) applyPrices(pa.prices); drawPrices(); if (typeof fillItems === 'function') fillItems();   // 세션권 가격까지 받아 가격 관리·불러오기에 채움
   };
-  $('#passCopy').onclick = async () => { const v = $('#passUrl').value; if (!v) return; try { await navigator.clipboard.writeText(v); $('#passStatus').textContent = '복사했어요. 회원에게 보내 주세요.'; } catch (e) { $('#passUrl').select(); $('#passStatus').textContent = '링크를 길게 눌러 복사해 주세요.'; } };
+  document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => { const el = $(b.dataset.copy), v = el.value; if (!v) return; try { await navigator.clipboard.writeText(v); $('#passStatus').textContent = '복사했어요. 회원에게 보내 주세요.'; } catch (e) { el.select(); $('#passStatus').textContent = '링크를 길게 눌러 복사해 주세요.'; } });
   $('#passNew').onclick = async () => {
-    if (!confirm('세션권 링크를 새로 만들까요?\n이전에 보낸 링크와 약정서 링크는 바로 열리지 않게 돼요.')) return;
+    if (!confirm('1회권 링크와 세션권 링크를 모두 새로 만들까요?\n이전에 보낸 링크와 약정서 링크는 바로 열리지 않게 돼요.')) return;
     const r = await Store.admin('passReset', key).catch(e => ({ ok:false, error:e.message }));
     if (!r.ok) return $('#passStatus').textContent = errText(r.error);
-    adminPassKey = r.key; setPassUi(r.key); $('#passStatus').textContent = '새 링크를 만들었어요. 이전 링크는 이제 열리지 않아요.'; };
+    adminPassKey = r.key; setPassUi(r.key, r.one); $('#passStatus').textContent = '새 링크를 만들었어요. 이전 링크는 이제 열리지 않아요.'; };
   /* 확정 문자 자동 발송 버튼 */
   const setSms = on => { $('#smsBtn').setAttribute('aria-pressed', on ? 'true' : 'false'); $('#smsBtn').textContent = on ? '켜짐' : '꺼짐'; };
   $('#smsBtn').onclick = async () => {
@@ -1553,10 +1565,8 @@ else if (QS.has('contract')) showContract();
 else {
   const hp = document.querySelector('#bookView .hero'), mb = hp.querySelector('.modebar');
   if (MODE_PASS) {
-    hp.querySelector('h1').textContent = '세션권 구매·예약';
-    hp.querySelector('p').innerHTML = '이솔 원장님이 보내드린 <b>회원 전용 링크</b>예요.<br>세션권을 고르고 수업 날짜를 <b>바로 예약</b>하세요.';
-    mb.innerHTML = '<a class="on" href="' + location.search + '">세션권 구매</a><a href="?member">기존 회원 예약</a>';
-    document.querySelector('#bookView [data-step="1"] h2').textContent = '세션권을 골라 주세요';
+    mb.style.display = 'none';   // 전용 링크 페이지는 기존 회원 예약과 나눔(탭 없음)
+    setPassHero();
   } else {
     hp.querySelector('p').innerHTML = '전문가가 직접 늘려주는 <b>1:1 패시브 스트레칭</b>.<br>처음 오시는 분은 <b>첫 상담(웰컴 처방 스트레칭)</b>부터 시작해요.';
     mb.innerHTML = '<a class="on" href="./">첫 상담 예약</a><a href="?member">기존 회원 예약</a>';

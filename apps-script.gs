@@ -65,7 +65,7 @@ function setup() {
   ms.getRange(1, 1, 1, MEM_H.length).setValues([MEM_H]).setFontWeight('bold');
   if (ms.getMaxColumns() > MEM_H.length) ms.getRange(1, MEM_H.length + 1, 1, ms.getMaxColumns() - MEM_H.length).clearContent();
   readPrices_();   // '가격' 탭이 없으면 기본값으로 만든다
-  passKey_();      // 세션권 전용 링크 키가 없으면 만든다
+  passKey_(); oneKey_();   // 세션권·1회권 전용 링크 키가 없으면 만든다
   sheet_('회원권', PASS_H).getRange(1, 1, 1, PASS_H.length).setValues([PASS_H]).setFontWeight('bold');
   sheet_('지정가', CUSTOM_H);
   Logger.log('회원권 옮김: ' + withLock_(() => ({ ok: true, made: migratePasses_() })).made + '명');
@@ -98,9 +98,9 @@ function adminRecover_() {
 function doGet(e) {
   const a = (e.parameter || {}).action;
   if (a === 'slots') {   // 세션권(1·10·20회권) 가격은 원장이 보낸 전용 링크(pass)로 들어온 경우에만 내려준다
-    const full = passOk_((e.parameter || {}).pass), all = readPrices_(), prices = {};
-    Object.keys(all).forEach(k => { if (full || isWelcome_(k)) prices[k] = all[k]; });
-    return json_({ ok: true, today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: prices, full: full, vat: { on: vatOn_(), from: VAT_FROM } });
+    const level = passLevel_((e.parameter || {}).pass), all = readPrices_(), prices = {};
+    Object.keys(all).forEach(k => { if (isWelcome_(k) || itemLevel_(k) === level) prices[k] = all[k]; });
+    return json_({ ok: true, today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: prices, full: !!level, level: level, vat: { on: vatOn_(), from: VAT_FROM } });
   }
   return json_({ ok: false, error: 'unknown' });
 }
@@ -113,7 +113,7 @@ function doPost(e) {
   if (d.action === 'memberBook') return json_(memberBook_(d));
   if (d.action === 'adminRecover') return json_(adminRecover_());
   if (d.action === 'contract') return json_(contractOnly_(d));
-  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1, setMemo: 1, passAdd: 1, passEdit: 1, custom: 1, setCustom: 1, passLink: 1, passReset: 1 };
+  const adminActions = { setBlocks: 1, list: 1, update: 1, cancel: 1, confirm: 1, noshow: 1, members: 1, memberSave: 1, memberDelete: 1, adminBook: 1, setPrices: 1, setSms: 1, calResync: 1, setMemo: 1, passAdd: 1, passEdit: 1, custom: 1, setCustom: 1, passLink: 1, passReset: 1, pricesAll: 1 };
   if (!adminActions[d.action]) return json_({ ok: false, error: 'unknown' });
   const auth = checkAdmin_(d.key);
   if (!auth.ok) return json_(auth);
@@ -135,7 +135,8 @@ function doPost(e) {
     case 'passAdd': return json_(passAddAdmin_(d));
     case 'passEdit': return json_(passEdit_(d));
     case 'custom': return json_({ ok: true, list: readCustom_() });
-    case 'passLink': return json_({ ok: true, key: passKey_() });
+    case 'passLink': return json_({ ok: true, key: passKey_(), one: oneKey_() });
+    case 'pricesAll': return json_({ ok: true, prices: readPrices_() });
     case 'passReset': return json_(passReset_());
     case 'setCustom': return json_(writeCustom_(d.list || []));
   }
@@ -163,12 +164,23 @@ function passKey_() {
   if (!k) { k = Utilities.getUuid().replace(/-/g, '').slice(0, 12); pr.setProperty('PASS_KEY', k); }
   return k;
 }
-function passOk_(v) { return !!v && String(v) === passKey_(); }
-function passReset_() { const k = Utilities.getUuid().replace(/-/g, '').slice(0, 12); PropertiesService.getScriptProperties().setProperty('PASS_KEY', k); return { ok: true, key: k }; }
+function oneKey_() {   // 1회권 전용 링크 키 (세션권 링크와 따로)
+  const pr = PropertiesService.getScriptProperties(); let k = pr.getProperty('ONE_KEY');
+  if (!k) { k = Utilities.getUuid().replace(/-/g, '').slice(0, 12); pr.setProperty('ONE_KEY', k); }
+  return k;
+}
+// 링크 종류: 'one' = 1회권 링크, 'pkg' = 세션권(10·20회권) 링크, '' = 없음
+function passLevel_(v) { v = String(v || ''); if (!v) return ''; if (v === passKey_()) return 'pkg'; if (v === oneKey_()) return 'one'; return ''; }
+function itemLevel_(itemId) { return /-1$/.test(String(itemId || '')) ? 'one' : /-(10|20)$/.test(String(itemId || '')) ? 'pkg' : ''; }
+function passOk_(v) { return passLevel_(v) === 'pkg'; }
+function passReset_() {   // 두 링크를 모두 새로 만든다(이전 링크는 막힘)
+  const pr = PropertiesService.getScriptProperties(), nk = () => Utilities.getUuid().replace(/-/g, '').slice(0, 12), k = nk(), o = nk();
+  pr.setProperty('PASS_KEY', k); pr.setProperty('ONE_KEY', o); return { ok: true, key: k, one: o };
+}
 
 function book_(d) {
   if (d.website) return { ok: false, error: 'invalid' };
-  if (!isWelcome_(d.itemId) && !passOk_(d.pass)) return { ok: false, error: 'needPass' };
+  if (!isWelcome_(d.itemId) && itemLevel_(d.itemId) !== passLevel_(d.pass)) return { ok: false, error: 'needPass' };   // 1회권은 1회권 링크, 10·20회권은 세션권 링크로만
   const hour = Number(d.hour), phone = digits_(d.phone);
   const v = validateSlot_(d.date, hour, false); if (v) return v;
   if (!String(d.name || '').trim() || !/^01[016789]\d{7,8}$/.test(phone)) return { ok: false, error: 'invalid', message: '이름/연락처 확인' };
