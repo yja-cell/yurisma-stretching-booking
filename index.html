@@ -942,29 +942,41 @@ const qBlocks = (() => {   // label.f(또는 학교 상자)를 기준으로 질�
   groups.forEach((g, i) => g.dataset.q = Q_KEYS[i] || ('q' + i));
   return groups;
 })();
-const qCommitted = {}, qText = { name:1, region:1, school:1 }; let qShown = 0, qTimer = 0;
+const qCommitted = {}, qText = { name:1, region:1, school:1 }; let qShown = 0, qTimer = 0, qPhoneOk = false;
 function qDone(k){ const d = formData();
   if (qText[k]) return k==='school' && !isKids() ? true : !!(qCommitted[k] && d[k]);
   const m = { phone: /^01[016789][0-9]{7,8}$/.test(d.phone), gender: !!d.gender, age: !!d.age, area: d.area.length>0, med: d.med.length>0, route: !!d.route };
   return k in m ? m[k] : true; }
+// 이름·연락처·거주지·(키즈)학교·성별은 처음부터 보이고, 연령대부터는 앞 질문에 답하면 하나씩 나온다
+const Q_FIRST = qBlocks.findIndex(g => g.dataset.q === 'gender') + 1;
+function qFocusNext(cur){   // Enter/다음: 화면에 보이는 다음 글자 칸으로
+  const ins = [...form.querySelectorAll('input[type=text],input[type=tel]')].filter(i => i.offsetParent && i.name !== 'website');
+  const n = ins[ins.indexOf(cur) + 1]; if (n) setTimeout(() => n.focus({ preventScroll: false }), 30);
+}
 function qRefresh(focusNext){
   let upto = qBlocks.findIndex(g => !qDone(g.dataset.q)); if (upto < 0) upto = qBlocks.length - 1;
-  const before = qShown; qShown = Math.max(qShown, upto + 1);
+  const before = qShown; qShown = Math.max(qShown, upto + 1, Q_FIRST);
   qBlocks.forEach((g, i) => g.classList.toggle('qhide', i >= qShown));
+  form.style.paddingBottom = qShown < qBlocks.length ? '45vh' : '';   // 아직 안 나온 질문이 있으면 아래 여백을 둬서 새 질문을 화면 가운데로 올릴 수 있게
   const fresh = qBlocks.slice(before, qShown).filter(g => !(g.dataset.q==='school' && !isKids()));
   if (!before || !fresh.length) return;
   fresh.forEach((g, i) => { g.style.animationDelay = (i * 60) + 'ms'; animIn(g, 'anim-up'); });
   const first = fresh[0], r = first.getBoundingClientRect();
+  if (first.dataset.q === 'age') {   // 앞 5개를 다 채우면 연령대가 화면 가운데로 오게 부드럽게 내려간다
+    if (document.activeElement && document.activeElement.blur && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) document.activeElement.blur();   // 휴대폰 키보드 닫기
+    setTimeout(() => { const rr = first.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + rr.top + rr.height / 2 - innerHeight / 2, behavior: 'smooth' }); }, 120);
+    return;
+  }
   if (r.bottom > innerHeight - 110) window.scrollBy({ top: r.bottom - innerHeight + 140, behavior: 'smooth' });
   if (focusNext) { const inp = first.querySelector('input[type=text],input[type=tel]'); if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 60); }
 }
 function qInit(){ ['name','region','school'].forEach(k => { if ((form.elements[k] && form.elements[k].value || '').trim()) qCommitted[k] = true; }); qRefresh(false); }
 form.addEventListener('input', e => { const k = e.target.name;
   if (qText[k]) { clearTimeout(qTimer); qTimer = setTimeout(() => { if (e.target.value.trim()) { qCommitted[k] = true; qRefresh(false); } }, 1100); }
-  else if (k==='phone') qRefresh(/^01[016789][0-9]{7,8}$/.test(e.target.value.replace(/\D/g,'')));
+  else if (k==='phone') { const ok = /^01[016789][0-9]{7,8}$/.test(e.target.value.replace(/\D/g,'')); qRefresh(false); if (ok && !qPhoneOk) qFocusNext(e.target); qPhoneOk = ok; }
 });
 form.addEventListener('change', e => { const k = e.target.name; if (qText[k] && e.target.value.trim()) qCommitted[k] = true; qRefresh(false); });
-form.addEventListener('keydown', e => { const k = e.target.name; if (e.key !== 'Enter' || !(qText[k] || k==='phone')) return; e.preventDefault(); if (qText[k] && e.target.value.trim()) qCommitted[k] = true; clearTimeout(qTimer); qRefresh(true); });
+form.addEventListener('keydown', e => { const k = e.target.name; if (e.key !== 'Enter' || !(qText[k] || k==='phone')) return; e.preventDefault(); if (qText[k] && e.target.value.trim()) qCommitted[k] = true; clearTimeout(qTimer); qRefresh(false); qFocusNext(e.target); });
 form.querySelectorAll('input[type=text],input[type=tel]').forEach(i => i.setAttribute('enterkeyhint', 'next'));
 function syncKidsForm(){   // 키즈: 아이 이름 + 보호자 연락처 + 학교
   const k = isKids();
