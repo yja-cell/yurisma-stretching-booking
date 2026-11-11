@@ -724,11 +724,23 @@ const lsGet = (k,d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; 
 const lsSet = (k,v) => localStorage.setItem(k, JSON.stringify(v));
 const Store = {
   blocks:{ weekly:{}, dates:{} }, booked:[],
-  async refresh(){
+  loadedAt: 0, _inflight: null,
+  // 같은 때 여러 번 불러도 요청은 한 번만 보낸다
+  refresh(){ if (!this._inflight) this._inflight = this._refresh().finally(() => { this._inflight = null; }); return this._inflight; },
+  // 마지막으로 받은 예약 가능 시간을 휴대폰에 10분 보관 → 다음에 열 때 바로 보여 주고 뒤에서 새로 받는다
+  cacheKey(){ return 'yu_slots_' + (PASS_TOKEN || adminPassKey || 'pub'); },
+  fromCache(){ try { const c = JSON.parse(localStorage.getItem(this.cacheKey()) || 'null'); if (c && Date.now() - c.at < 600000 && c.j && c.j.ok) { this.apply(c.j); this.loadedAt = c.at; return true; } } catch (e) {} return false; },
+  apply(j){
+    this.blocks = j.blocks; this.booked = j.booked; if (j.openUntil) this.openUntil = j.openUntil; renderOpenNotice();
+    if (MODE_PASS) { passLevel = j.level || ''; passState = passLevel ? 'ok' : 'bad'; }
+    if (j.vat) VAT = j.vat; if (j.prices) applyPrices(j.prices);
+  },
+  async _refresh(){
     if (API) {
       const pk = PASS_TOKEN || adminPassKey;
       const r = await fetch(API + '?action=slots&t=' + Date.now() + (pk ? '&pass=' + encodeURIComponent(pk) : ''));
       const j = await r.json(); if (!j.ok) throw new Error(j.error || '불러오기 실패');
+      this.loadedAt = Date.now(); try { localStorage.setItem(this.cacheKey(), JSON.stringify({ at: this.loadedAt, j })); } catch (e) {}
       this.blocks = j.blocks; this.booked = j.booked; if (j.openUntil) this.openUntil = j.openUntil; renderOpenNotice();
       if (MODE_PASS) { passLevel = j.level || ''; passState = passLevel ? 'ok' : 'bad'; }
       if (j.vat) VAT = j.vat; if (j.prices) applyPrices(j.prices);
@@ -880,8 +892,14 @@ function renderSlots(){
     return `<button data-h="${h}" class="${h===st.hour?'on':''}" ${b?'disabled':''} aria-label="${hm(h)}${b==='booked'?' 예약 마감':b?' 예약 불가':''}">${hm(h)}</button>`; }).join('');
 }
 async function loadAvailability(){
-  st.loading=true; renderCal(); renderSlots();
-  try { await Store.refresh(); } catch(e){ alert('예약 가능 시간을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.\n(' + e.message + ')'); }
+  // 이미 받아 둔 정보가 있으면(첫 화면에서 미리 받거나 이전 방문 기록) 바로 달력을 보여 주고, 최신 정보는 뒤에서 받아 다시 그린다
+  if (Store.loadedAt) {
+    st.loading=false; renderCal(); renderSlots(); updateBar();
+    if (Date.now() - Store.loadedAt > 15000 || Store._inflight) { try { await Store.refresh(); } catch(e){} }
+  } else {
+    st.loading=true; renderCal(); renderSlots();
+    try { await Store.refresh(); } catch(e){ alert('예약 가능 시간을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.\n(' + e.message + ')'); }
+  }
   st.loading=false;
   if (st.date && st.hour!==null && blockedReason(st.date, st.hour)) st.hour=null;
   renderCal(); renderSlots(); updateBar();
@@ -1844,6 +1862,7 @@ function renderOpenNotice(){ document.querySelectorAll('.opennote').forEach(el =
 function showMember(){
   $('#bookView').classList.add('hide'); $('#bar').classList.add('hide');
   $('#memberView').classList.remove('hide'); $('#topTitle').textContent='회원 예약';
+  if (API) { Store.fromCache(); Store.refresh().catch(()=>{}); }   // 이름·연락처 입력하는 동안 예약 가능 시간을 미리 받아 둔다
   let cred = null, mem = null;
   const ms = { view:new Date(), date:null, hour:null }; ms.view.setDate(1); ms.view.setHours(0,0,0,0);
   const msg = (id, t, ok) => { const el=$(id); el.textContent=t; el.className='msg ' + (ok?'ok':'err'); };
@@ -1893,7 +1912,8 @@ function showMember(){
     $('#mLoginBtn').disabled = false;
     if (!r.ok) return msg('#mLoginMsg', mErr(r.error));
     cred = c; mem = r.member; msg('#mLoginMsg','');
-    await Store.refresh().catch(()=>{}); renderHome();
+    if (Store.loadedAt) { renderHome(); Store.refresh().then(() => { if (mem) { renderCal(); renderSlots(); } }).catch(()=>{}); }   // 미리 받아 둔 시간으로 바로 표시
+    else { await Store.refresh().catch(()=>{}); renderHome(); }
   };
   $('#mPhone').addEventListener('keydown', e => { if (e.key==='Enter') $('#mLoginBtn').click(); });
   try { const pf = JSON.parse(sessionStorage.getItem('yu_member_prefill') || 'null'); sessionStorage.removeItem('yu_member_prefill');   // 방금 예약한 신규 회원은 바로 회원 화면으로
@@ -1930,7 +1950,8 @@ else {
     document.querySelector('#bookView [data-step="1"] h2').textContent = '첫 상담을 예약해 주세요';
     const n = document.createElement('div'); n.className = 'note'; n.textContent = '세션권(1회권·10회권·20회권)은 첫 상담 후 이솔 원장님이 보내드리는 회원 전용 링크에서 구매할 수 있어요.'; $('#itemList').after(n);
   }
-  renderItems(); go(1); if (API) Store.refresh().catch(()=>{ if (MODE_PASS) { passState = 'bad'; renderItems(); } });
+  if (API) Store.fromCache();
+  renderItems(); go(1); if (API) Store.refresh().catch(()=>{ if (MODE_PASS && !Store.loadedAt) { passState = 'bad'; renderItems(); } });
 }
 </script>
 </body>

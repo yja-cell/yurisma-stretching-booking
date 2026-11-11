@@ -108,13 +108,26 @@ function adminRecover_() {
   return { ok: true, sent: true, to: maskEmail_(to) };
 }
 
+/* ---------- 예약 가능 시간 캐시 ----------
+ * 날짜·시간 화면이 매번 시트 4개를 읽지 않도록 결과를 60초 보관한다. 예약·취소·차단·가격 저장 등 잠금(withLock_) 작업이 끝나면 바로 지워서
+ * 바뀐 내용이 즉시 반영된다. 시트를 손으로 고친 경우에만 최대 60초 늦게 보일 수 있다. (중복 예약은 저장할 때 다시 확인하므로 생기지 않음) */
+const SLOTS_CACHE = 'slots_base_v1';
+function slotsBase_() {
+  const c = CacheService.getScriptCache(), hit = c.get(SLOTS_CACHE);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  const b = { today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: readPrices_(), vat: { on: vatOn_(), from: VAT_FROM } };
+  try { c.put(SLOTS_CACHE, JSON.stringify(b), 60); } catch (e) {}
+  return b;
+}
+function slotsCacheClear_() { try { CacheService.getScriptCache().remove(SLOTS_CACHE); } catch (e) {} }
+
 /* ---------- 입구 ---------- */
 function doGet(e) {
   const a = (e.parameter || {}).action;
   if (a === 'slots') {   // 세션권(1·10·20회권) 가격은 원장이 보낸 전용 링크(pass)로 들어온 경우에만 내려준다
-    const level = passLevel_((e.parameter || {}).pass), all = readPrices_(), prices = {};
-    Object.keys(all).forEach(k => { if (isWelcome_(k) || itemLevel_(k) === level) prices[k] = all[k]; });
-    return json_({ ok: true, today: today_(), openUntil: openUntil_(), blocks: readBlocks_(), booked: readBooked_(), prices: prices, full: !!level, level: level, vat: { on: vatOn_(), from: VAT_FROM } });
+    const level = passLevel_((e.parameter || {}).pass), base = slotsBase_(), prices = {};
+    Object.keys(base.prices).forEach(k => { if (isWelcome_(k) || itemLevel_(k) === level) prices[k] = base.prices[k]; });
+    return json_({ ok: true, today: base.today, openUntil: base.openUntil, blocks: base.blocks, booked: base.booked, prices: prices, full: !!level, level: level, vat: base.vat });
   }
   return json_({ ok: false, error: 'unknown' });
 }
@@ -876,7 +889,7 @@ function writeBlocks_(b) {
 }
 
 /* ---------- 도우미 ---------- */
-function withLock_(fn) { const lock = LockService.getScriptLock(); lock.waitLock(15000); try { return fn(); } finally { lock.releaseLock(); } }
+function withLock_(fn) { const lock = LockService.getScriptLock(); lock.waitLock(15000); try { return fn(); } finally { slotsCacheClear_(); lock.releaseLock(); } }
 function sheet_(name, headers) {
   const ss = SpreadsheetApp.getActive();
   let s = ss.getSheetByName(name);
