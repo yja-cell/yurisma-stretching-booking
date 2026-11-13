@@ -156,7 +156,7 @@
 .slots.stag button{animation:slotIn .24s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 16ms)}
 .slots button.on{animation:pick .26s cubic-bezier(.2,.8,.2,1)}
 #barInfo{display:block}
-.qb.qhide{display:none}
+.qb.qhide,.qb.qoff{display:none}
 /* 처음 방문·신규 ↔ 기존 회원 예약 이동 (지원 브라우저: 크롬·사파리 최신) */
 @view-transition{navigation:auto}
 ::view-transition-old(root){animation:vtOut .18s ease-in both}
@@ -452,8 +452,8 @@ select.preset{width:100%;padding:10px 12px;border:1px solid var(--line);border-r
           <label class="all"><input type="checkbox" id="agreeAll"> 전체 동의</label>
           <label><input type="checkbox" class="ag"> [필수] 개인정보 수집·이용 동의</label>
           <details><summary>내용 보기</summary>수집 항목: 이름, 연락처(키즈는 보호자 연락처), 거주지(시·구), 학교(키즈), 성별, 연령대, 방문 경로 / 목적: 예약 확인·안내 연락(예약 확정 문자 포함)·수업 일정 관리 / 보관: 마지막 이용일로부터 1년 후 파기 · <a href="privacy.html" target="_blank">개인정보처리방침 전문</a></details>
-          <label><input type="checkbox" class="ag"> [필수] 건강정보(민감정보) 처리 동의</label>
-          <details><summary>내용 보기</summary>수집 항목: 불편 부위, 통증 정도, 진료·수술·질환 이력 / 목적: 안전한 스트레칭 진행 여부 판단과 프로그램 구성 / 보관: 위와 같음. 동의하지 않으면 안전 확인이 어려워 예약할 수 없습니다.</details>
+          <label><input type="checkbox" class="ag ag-health"> [필수] 건강정보(민감정보) 처리 동의</label>
+          <details class="ag-health-d"><summary>내용 보기</summary>수집 항목: 불편 부위, 통증 정도, 진료·수술·질환 이력 / 목적: 안전한 스트레칭 진행 여부 판단과 프로그램 구성 / 보관: 위와 같음. 동의하지 않으면 안전 확인이 어려워 예약할 수 없습니다.</details>
           <label><input type="checkbox" class="ag"> [필수] 예약 변경·취소 규정 확인</label>
           <details><summary>내용 보기</summary>예약 24시간 전까지 변경·취소 가능, 이후 취소 및 노쇼는 1회 차감</details>
           <div id="mediaAgree">
@@ -944,6 +944,7 @@ function formData(){
 function formMissing(){
   const d=formData(), miss=[];
   if(!d.name) miss.push(isKids()?'아이 이름':'이름'); if(!/^01[016789][0-9]{7,8}$/.test(d.phone)) miss.push(isKids()?'보호자 연락처':'연락처');
+  if (MODE_PASS) { if(!d.agreed) miss.push('필수 동의'); return miss; }   // 세션권: 이름·연락처·동의만
   if(!d.region) miss.push('거주지'); if(isKids() && !d.school) miss.push('학교');
   if(!d.gender) miss.push('성별'); if(!d.age) miss.push('연령대'); if(!d.area.length) miss.push('불편 부위');
   if(!d.med.length) miss.push('진료·수술 이력'); if(d.med.some(v => v!=='없음') && !d.medDetail) miss.push('이력 상세');
@@ -972,6 +973,7 @@ function qFocusNext(cur){   // Enter/다음: 화면에 보이는 다음 글자 �
   const n = ins[ins.indexOf(cur) + 1]; if (n) setTimeout(() => n.focus({ preventScroll: false }), 30);
 }
 function qRefresh(focusNext){
+  if (MODE_PASS) return;
   let upto = qBlocks.findIndex(g => !qDone(g.dataset.q)); if (upto < 0) upto = qBlocks.length - 1;
   const before = qShown; qShown = Math.max(qShown, upto + 1, Q_FIRST);
   qBlocks.forEach((g, i) => g.classList.toggle('qhide', i >= qShown));
@@ -988,7 +990,18 @@ function qRefresh(focusNext){
   if (r.bottom > innerHeight - 110) window.scrollBy({ top: r.bottom - innerHeight + 140, behavior: 'smooth' });
   if (focusNext) { const inp = first.querySelector('input[type=text],input[type=tel]'); if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 60); }
 }
-function qInit(){ ['name','region','school'].forEach(k => { if ((form.elements[k] && form.elements[k].value || '').trim()) qCommitted[k] = true; }); qRefresh(false); }
+// 세션권 링크(기존 회원): 몸 상태 질문 없이 이름·연락처·동의만 받는다. 회원 정보에 있는 거주지·학교·사전 질문을 그대로 쓴다.
+const PASS_Q = ['name', 'phone', 'agree'];
+function passForm(){
+  qBlocks.forEach(g => g.classList.toggle('qoff', !PASS_Q.includes(g.dataset.q)));
+  qBlocks.forEach(g => g.classList.remove('qhide')); qShown = qBlocks.length; form.style.paddingBottom = '';
+  const hc = form.querySelector('input.ag-health'); if (hc) { hc.checked = true; hc.closest('label').classList.add('hide'); }   // 몸 상태를 받지 않으니 건강정보 동의는 숨김
+  form.querySelectorAll('.ag-health-d').forEach(el => el.classList.add('hide'));
+  const h = document.querySelector('#bookView [data-step="3"] h2'); if (h) h.textContent = '예약자 정보';
+  let n = $('#passNote'); if (!n) { n = document.createElement('div'); n.id = 'passNote'; n.className = 'note'; n.style.margin = '-4px 0 12px'; form.before(n); }
+  { n.textContent = '첫 상담 때 적어 주신 정보로 회원 정보에 연결돼요. ' + (isKids() ? '아이 이름과 보호자 연락처' : '이름과 연락처') + '를 회원 등록 때와 똑같이 적어 주세요.'; }
+}
+function qInit(){ if (MODE_PASS) return passForm(); ['name','region','school'].forEach(k => { if ((form.elements[k] && form.elements[k].value || '').trim()) qCommitted[k] = true; }); qRefresh(false); }
 form.addEventListener('input', e => { const k = e.target.name;
   if (qText[k]) { clearTimeout(qTimer); qTimer = setTimeout(() => { if (e.target.value.trim()) { qCommitted[k] = true; qRefresh(false); } }, 1100); }
   else if (k==='phone') { const ok = /^01[016789][0-9]{7,8}$/.test(e.target.value.replace(/\D/g,'')); qRefresh(false); if (ok && !qPhoneOk) qFocusNext(e.target); qPhoneOk = ok; }
@@ -1014,6 +1027,7 @@ function renderSummary(){
     ['불편 부위', d.area.join(', ')], ['통증 정도', `${d.pain} / 10`],
     ['진료·수술 이력', d.med.join(', ') + (d.medDetail?` (${d.medDetail})`:'')], ['방문 경로', d.route],
   ];
+  if (MODE_PASS) rows.splice(3);   // 세션권: 이용권·일시·예약자만
   if (d.memo) rows.push(['요청사항', d.memo]);
   if (isPkgItem() && contractUI){ const c = contractUI.get(); rows.push(['약정서', `작성 완료 · ${c.pay} · 사용기간 ${periodText(c.start, c.days)}`]); }
   $('#summary').innerHTML = rows.map(r => `<div class="row"><span>${r[0]}</span><span>${esc(r[1])}</span></div>`).join('')
@@ -1123,8 +1137,8 @@ function printContract(c, id){
 }
 
 /* ---------- 흐름 ---------- */
-const STEP_LABEL = { 1:'이용권', 2:'날짜·시간', 3:'사전 질문', 5:'약정서', 4:'확인' };
-const STEP_TITLE = { 1:'유리스마 스트레칭', 2:'날짜·시간 선택', 3:'사전 질문', 5:'약정서 작성', 4:'예약 확인' };
+const STEP_LABEL = { 1:'이용권', 2:'날짜·시간', 3: MODE_PASS ? '예약자 정보' : '사전 질문', 5:'약정서', 4:'확인' };
+const STEP_TITLE = { 1:'유리스마 스트레칭', 2:'날짜·시간 선택', 3: MODE_PASS ? '예약자 정보' : '사전 질문', 5:'약정서 작성', 4:'예약 확인' };
 const isPkgItem = () => !!(st.item && pkgOf(itemObj().name));
 const flow = () => isPkgItem() ? [1,2,3,5,4] : [1,2,3,4];
 let contractUI = null, lastContract = null;
@@ -1181,7 +1195,7 @@ async function submit(){
   st.sending=true; updateBar();
   const i=itemObj(), d=formData();
   const payload = { date:st.date, hour:st.hour, time:hm(st.hour), category:catObj().label, minutes:catObj().minutes, itemId:i.id, itemName:i.name, price:i.price,
-    name:d.name, phone:d.phone, region:d.region, school:d.school, gender:d.gender, age:d.age, area:d.area, pain:d.pain, med:d.med, medDetail:d.medDetail, route:d.route, memo:d.memo, agreed:d.agreed, media: isPkgItem() ? null : d.media,
+    name:d.name, phone:d.phone, ...(MODE_PASS ? { region:'', school:'', gender:'', age:'', area:[], pain:'', med:[], medDetail:'', route:'', memo:'' } : { region:d.region, school:d.school, gender:d.gender, age:d.age, area:d.area, pain:d.pain, med:d.med, medDetail:d.medDetail, route:d.route, memo:d.memo }), agreed:d.agreed, media: isPkgItem() ? null : d.media,
     website: form.querySelector('input[name=website]').value };
   if (isPkgItem() && contractUI){ const c = contractUI.get(); lastContract = c; payload.contract = Object.assign({}, c, { product:i.name, category:catObj().label, categoryLabel:catObj().label.split(' ')[0] }); }
   let res;

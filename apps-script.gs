@@ -221,8 +221,11 @@ function book_(d) {
   const v = validateSlot_(d.date, hour, false); if (v) return v;
   if (!String(d.name || '').trim() || !/^01[016789]\d{7,8}$/.test(phone)) return { ok: false, error: 'invalid', message: '이름/연락처 확인' };
   if (!d.agreed) return { ok: false, error: 'invalid', message: '필수 동의 누락' };
-  const region = String(d.region || '').trim(), school = String(d.school || '').trim(), kids = String(d.category || '').indexOf('키즈') >= 0;
-  if (!region || region.length > 40 || school.length > 40 || (kids && !school)) return { ok: false, error: 'invalid', message: kids ? '거주지와 학교를 입력해 주세요.' : '거주지를 입력해 주세요.' };
+  let region = String(d.region || '').trim(), school = String(d.school || '').trim(); const kids = String(d.category || '').indexOf('키즈') >= 0, viaPass = !!passLevel_(d.pass);
+  if (viaPass && !region) {   // 세션권 링크: 몸 상태·거주지 질문 없이 받는다 → 같은 이름·연락처 회원의 거주지·학교를 그대로 쓴다
+    const em = findMember_(phone, d.name); if (em) { region = String(em.region || ''); school = String(em.school || ''); }
+  }
+  if (!viaPass && (!region || region.length > 40 || school.length > 40 || (kids && !school))) return { ok: false, error: 'invalid', message: kids ? '거주지와 학교를 입력해 주세요.' : '거주지를 입력해 주세요.' };
   const pkg = packageOf_(d.itemName);
   let con = null;
   const pr = salePrices_()[d.itemId];   // 부가세 적용 후 금액(12월부터)
@@ -239,7 +242,7 @@ function book_(d) {
     if (con) { con.start = con.start || d.date; conId = saveContract_(con, id); }
     const mem = autoMember_(d, phone, pr, pkg, conId, region, school, id);   // 수업을 신청하면 바로 회원으로 등록(또는 기존 회원에 횟수 추가)
     appendBooking_({ id: id, status: '확정', date: d.date, hour: hour, cat: d.category, item: d.itemName, price: pr.price, name: d.name, phone: phone,
-      gender: d.gender, age: d.age, area: [].concat(d.area || []).join(', '), pain: Number(d.pain) || 0, med: [].concat(d.med || []).join(', '),
+      gender: d.gender, age: d.age, area: [].concat(d.area || []).join(', '), pain: d.pain === '' || d.pain == null ? '' : Number(d.pain) || 0, med: [].concat(d.med || []).join(', '),
       medDetail: d.medDetail, route: d.route, memo: d.memo, agreed: 'Y', note: [con ? '약정서 서명' : '', mem.note].filter(String).join(' / '),
       member: mem.id || '', region: region, school: school, media: con ? '약정서 참고' : mediaText_(d.media) });
     cache.put(hourKey, String(Number(cache.get(hourKey) || 0) + 1), 3600);
